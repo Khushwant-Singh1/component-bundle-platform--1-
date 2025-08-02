@@ -1,0 +1,352 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatar    String?
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  orders    Order[]
+  reviews   Review[]
+  downloads Download[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+// Bundle/Product management
+model Bundle {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  shortDescription  String
+  description       String
+  price             Decimal  @db.Decimal(10, 2)
+  originalPrice     Decimal? @db.Decimal(10, 2)
+  setupTime         String
+  difficulty        String
+  estimatedValue    String?
+  category          String
+  demoUrl           String?
+  githubUrl         String?
+  downloadUrl       String?
+  isActive          Boolean  @default(true)
+  isFeatured        Boolean  @default(false)
+  isBestseller      Boolean  @default(false)
+  downloadCount     Int      @default(0)
+  viewCount         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  images      BundleImage[]
+  tags        BundleTag[]
+  features    BundleFeature[]
+  techStack   BundleTech[]
+  includes    BundleInclude[]
+  orders      OrderItem[]
+  reviews     Review[]
+  downloads   Download[]
+
+  @@map("bundles")
+}
+
+model BundleImage {
+  id       String @id @default(cuid())
+  bundleId String
+  url      String
+  alt      String?
+  order    Int    @default(0)
+
+  // Relations
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  @@map("bundle_images")
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  color String @default("#6B7280")
+
+  // Relations
+  bundles BundleTag[]
+
+  @@map("tags")
+}
+
+model BundleTag {
+  bundleId String
+  tagId    String
+
+  // Relations
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([bundleId, tagId])
+  @@map("bundle_tags")
+}
+
+model BundleFeature {
+  id          String @id @default(cuid())
+  bundleId    String
+  description String
+  order       Int    @default(0)
+
+  // Relations
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  @@map("bundle_features")
+}
+
+model Technology {
+  id       String @id @default(cuid())
+  name     String @unique
+  category String // "frontend", "backend", "database", "tool"
+  color    String @default("#6B7280")
+
+  // Relations
+  bundles BundleTech[]
+
+  @@map("technologies")
+}
+
+model BundleTech {
+  bundleId String
+  techId   String
+
+  // Relations
+  bundle Bundle     @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  tech   Technology @relation(fields: [techId], references: [id], onDelete: Cascade)
+
+  @@id([bundleId, techId])
+  @@map("bundle_tech")
+}
+
+model BundleInclude {
+  id          String @id @default(cuid())
+  bundleId    String
+  description String
+  order       Int    @default(0)
+
+  // Relations
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  @@map("bundle_includes")
+}
+
+// Order management
+model Order {
+  id            String      @id @default(cuid())
+  userId        String
+  email         String
+  status        OrderStatus @default(PENDING)
+  totalAmount   Decimal     @db.Decimal(10, 2)
+  currency      String      @default("USD")
+  paymentMethod String?
+  paymentId     String?     @unique
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model OrderItem {
+  id       String  @id @default(cuid())
+  orderId  String
+  bundleId String
+  price    Decimal @db.Decimal(10, 2)
+  quantity Int     @default(1)
+
+  // Relations
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bundle Bundle @relation(fields: [bundleId], references: [id])
+
+  @@map("order_items")
+}
+
+// Review system
+model Review {
+  id       String @id @default(cuid())
+  userId   String
+  bundleId String
+  rating   Int    // 1-5 stars
+  title    String?
+  content  String
+  isPublic Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  // Ensure one review per user per bundle
+  @@unique([userId, bundleId])
+  @@map("reviews")
+}
+
+// Download tracking
+model Download {
+  id         String   @id @default(cuid())
+  userId     String
+  bundleId   String
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  bundle Bundle @relation(fields: [bundleId], references: [id])
+
+  @@map("downloads")
+}
+
+// Analytics
+model PageView {
+  id        String   @id @default(cuid())
+  page      String   // "/", "/bundles", "/bundles/[id]"
+  bundleId  String?  // For bundle detail pages
+  ipAddress String?
+  userAgent String?
+  referer   String?
+  createdAt DateTime @default(now())
+
+  @@map("page_views")
+}
+
+// Newsletter subscription
+model Newsletter {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("newsletter")
+}
+
+// Contact form submissions
+model ContactSubmission {
+  id        String            @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String
+  company   String?
+  subject   ContactSubject
+  message   String
+  status    SubmissionStatus  @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@map("contact_submissions")
+}
+
+enum ContactSubject {
+  TECHNICAL
+  BILLING
+  PRESALES
+  PARTNERSHIP
+  FEEDBACK
+  OTHER
+}
+
+enum SubmissionStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// FAQ management
+model FAQ {
+  id       String  @id @default(cuid())
+  question String
+  answer   String
+  category String?
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+// Coupon/Discount system
+model Coupon {
+  id            String      @id @default(cuid())
+  code          String      @unique
+  description   String?
+  discountType  DiscountType
+  discountValue Decimal     @db.Decimal(10, 2)
+  minAmount     Decimal?    @db.Decimal(10, 2)
+  maxUses       Int?
+  usedCount     Int         @default(0)
+  isActive      Boolean     @default(true)
+  validFrom     DateTime
+  validUntil    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("coupons")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+// Email templates
+model EmailTemplate {
+  id       String @id @default(cuid())
+  name     String @unique
+  subject  String
+  htmlBody String
+  textBody String?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+// System settings
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String @default("string") // "string", "number", "boolean", "json"
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
