@@ -16,7 +16,7 @@ import { trackPageView } from "@/lib/analytics"
  *   data: Bundle
  * }
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Rate limiting
     const rateLimitResult = rateLimit(request, generalRateLimit)
@@ -27,12 +27,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
+    // Await params
+    const { id } = await params
+
     // Track page view
-    await trackPageView(request, `/api/bundles/${params.id}`, params.id)
+    await trackPageView(request, `/api/bundles/${id}`, id)
 
     // Find bundle
     const bundle = await prisma.bundle.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         images: { orderBy: { order: "asc" } },
         tags: { include: { tag: true } },
@@ -61,7 +64,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Update view count
     await prisma.bundle.update({
-      where: { id: params.id },
+      where: { id },
       data: { viewCount: { increment: 1 } },
     })
 
@@ -102,7 +105,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  *   data: Bundle
  * }
  */
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Rate limiting
     const rateLimitResult = rateLimit(request, generalRateLimit)
@@ -116,13 +119,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Authentication and authorization
     // const user = await requireAdmin(request)
 
+    // Await params
+    const { id } = await params
+
     // Parse and validate request body
     const body = await request.json()
     const validatedData = updateBundleSchema.parse(body)
 
     // Check if bundle exists
     const existingBundle = await prisma.bundle.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!existingBundle) {
@@ -134,7 +140,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       const slugConflict = await prisma.bundle.findFirst({
         where: {
           slug: validatedData.slug,
-          id: { not: params.id },
+          id: { not: id },
         },
       })
 
@@ -147,7 +153,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const bundle = await prisma.$transaction(async (tx) => {
       // Update the main bundle data
       const updatedBundle = await tx.bundle.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           name: validatedData.name,
           slug: validatedData.slug,
@@ -172,14 +178,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       if (validatedData.images !== undefined) {
         // Delete existing images
         await tx.bundleImage.deleteMany({
-          where: { bundleId: params.id },
+          where: { bundleId: id },
         })
 
         // Add new images
         if (validatedData.images.length > 0) {
           await tx.bundleImage.createMany({
             data: validatedData.images.map((url, index) => ({
-              bundleId: params.id,
+              bundleId: id,
               url,
               order: index,
             })),
@@ -191,7 +197,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       if (validatedData.tags !== undefined) {
         // Delete existing tag relations
         await tx.bundleTag.deleteMany({
-          where: { bundleId: params.id },
+          where: { bundleId: id },
         })
 
         // Add new tags
@@ -205,7 +211,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
             await tx.bundleTag.create({
               data: {
-                bundleId: params.id,
+                bundleId: id,
                 tagId: tag.id,
               },
             })
@@ -217,7 +223,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       if (validatedData.techStack !== undefined) {
         // Delete existing tech relations
         await tx.bundleTech.deleteMany({
-          where: { bundleId: params.id },
+          where: { bundleId: id },
         })
 
         // Add new tech stack
@@ -231,7 +237,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
             await tx.bundleTech.create({
               data: {
-                bundleId: params.id,
+                bundleId: id,
                 techId: tech.id,
               },
             })
@@ -243,14 +249,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       if (validatedData.features !== undefined) {
         // Delete existing features
         await tx.bundleFeature.deleteMany({
-          where: { bundleId: params.id },
+          where: { bundleId: id },
         })
 
         // Add new features
         if (validatedData.features.length > 0) {
           await tx.bundleFeature.createMany({
             data: validatedData.features.map((description, index) => ({
-              bundleId: params.id,
+              bundleId: id,
               description,
               order: index,
             })),
@@ -262,14 +268,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       if (validatedData.includes !== undefined) {
         // Delete existing includes
         await tx.bundleInclude.deleteMany({
-          where: { bundleId: params.id },
+          where: { bundleId: id },
         })
 
         // Add new includes
         if (validatedData.includes.length > 0) {
           await tx.bundleInclude.createMany({
             data: validatedData.includes.map((description, index) => ({
-              bundleId: params.id,
+              bundleId: id,
               description,
               order: index,
             })),
@@ -282,7 +288,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // Fetch the complete updated bundle data
     const completeBundle = await prisma.bundle.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         images: { orderBy: { order: "asc" } },
         tags: { include: { tag: true } },
@@ -312,7 +318,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
  *   message: string
  * }
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Rate limiting
     const rateLimitResult = rateLimit(request, generalRateLimit)
@@ -326,18 +332,59 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     // Authentication and authorization
     // const user = await requireAdmin(request)
 
+    // Await params
+    const { id } = await params
+
     // Check if bundle exists
     const existingBundle = await prisma.bundle.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!existingBundle) {
       throw new NotFoundError("Bundle not found")
     }
 
-    // Delete bundle (cascade will handle related records)
-    await prisma.bundle.delete({
-      where: { id: params.id },
+    // Delete related records first to avoid foreign key constraints
+    await prisma.$transaction(async (tx) => {
+      // Delete order items that reference this bundle
+      await tx.orderItem.deleteMany({
+        where: { bundleId: id },
+      })
+
+      // Delete bundle tags
+      await tx.bundleTag.deleteMany({
+        where: { bundleId: id },
+      })
+
+      // Delete bundle tech stack
+      await tx.bundleTech.deleteMany({
+        where: { bundleId: id },
+      })
+
+      // Delete bundle features
+      await tx.bundleFeature.deleteMany({
+        where: { bundleId: id },
+      })
+
+      // Delete bundle includes
+      await tx.bundleInclude.deleteMany({
+        where: { bundleId: id },
+      })
+
+      // Delete bundle images
+      await tx.bundleImage.deleteMany({
+        where: { bundleId: id },
+      })
+
+      // Delete reviews
+      await tx.review.deleteMany({
+        where: { bundleId: id },
+      })
+
+      // Finally delete the bundle
+      await tx.bundle.delete({
+        where: { id },
+      })
     })
 
     return NextResponse.json({

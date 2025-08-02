@@ -97,7 +97,7 @@ async function main() {
       originalPrice: 79.0,
       setupTime: "15 minutes",
       difficulty: "INTERMEDIATE",
-      estimatedValue: "$2,000+",
+      estimatedValue: "₹2,00,000+",
       category: "Full-Stack",
       demoUrl: "https://dashboard-demo.example.com",
       githubUrl: "https://github.com/example/dashboard-pro",

@@ -139,7 +139,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="font-semibold">${checkoutData.bundle.price}</span>
+                    <span className="font-semibold">₹{checkoutData.bundle.price}</span>
                   </div>
                 </div>
 
@@ -148,16 +148,16 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${checkoutData.bundle.price}</span>
+                    <span>₹{checkoutData.bundle.price}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax</span>
-                    <span>$0</span>
+                    <span>₹0</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span>${checkoutData.bundle.price}</span>
+                    <span>₹{checkoutData.bundle.price}</span>
                   </div>
                 </div>
               </CardContent>
@@ -171,7 +171,7 @@ export default function CheckoutPage() {
                     <span>Secure 256-bit SSL encryption</span>
                   </div>
                   <Button size="lg" className="w-full">
-                    Complete Purchase - ${checkoutData.bundle.price}
+                    Complete Purchase - ₹{checkoutData.bundle.price}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     By completing this purchase, you agree to our{" "}

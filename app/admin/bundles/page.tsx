@@ -1,115 +1,62 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreHorizontal, Edit, Eye, Trash2, Filter, Download, Star, TrendingUp } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { notFound } from 'next/navigation'
+import { prisma } from '@/lib/db'
 
-const bundles = [
-  {
-    id: 1,
-    name: "Dashboard Pro",
-    slug: "dashboard-pro",
-    category: "Full-Stack",
-    price: 49,
-    originalPrice: 79,
-    sales: 156,
-    revenue: 7644,
-    rating: 4.9,
-    reviews: 127,
-    downloads: 2500,
-    status: "active",
-    featured: true,
-    bestseller: true,
-    image: "/placeholder.svg?height=80&width=120",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-20",
-  },
-  {
-    id: 2,
-    name: "Auth Starter Kit",
-    slug: "auth-starter-kit",
-    category: "Full-Stack",
-    price: 29,
-    originalPrice: 49,
-    sales: 134,
-    revenue: 3886,
-    rating: 4.8,
-    reviews: 89,
-    downloads: 1800,
-    status: "active",
-    featured: false,
-    bestseller: false,
-    image: "/placeholder.svg?height=80&width=120",
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-18",
-  },
-  {
-    id: 3,
-    name: "E-commerce Pro",
-    slug: "ecommerce-pro",
-    category: "Full-Stack",
-    price: 79,
-    originalPrice: 129,
-    sales: 89,
-    revenue: 7031,
-    rating: 5.0,
-    reviews: 203,
-    downloads: 1200,
-    status: "active",
-    featured: true,
-    bestseller: true,
-    image: "/placeholder.svg?height=80&width=120",
-    createdAt: "2024-01-05",
-    updatedAt: "2024-01-19",
-  },
-  {
-    id: 4,
-    name: "Landing Page Kit",
-    slug: "landing-page-kit",
-    category: "Frontend",
-    price: 19,
-    originalPrice: 39,
-    sales: 245,
-    revenue: 4655,
-    rating: 4.7,
-    reviews: 156,
-    downloads: 3200,
-    status: "active",
-    featured: false,
-    bestseller: false,
-    image: "/placeholder.svg?height=80&width=120",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-17",
-  },
-  {
-    id: 5,
-    name: "Blog Template Pro",
-    slug: "blog-template-pro",
-    category: "Frontend",
-    price: 25,
-    originalPrice: 45,
-    sales: 67,
-    revenue: 1675,
-    rating: 4.6,
-    reviews: 92,
-    downloads: 890,
-    status: "draft",
-    featured: false,
-    bestseller: false,
-    image: "/placeholder.svg?height=80&width=120",
-    createdAt: "2024-01-12",
-    updatedAt: "2024-01-16",
-  },
-]
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Search, Plus, MoreHorizontal, Edit, Eye, Trash2, Filter, Download, Star, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DeleteBundleDialog } from '@/components/delete-bundle-dialog'
 
-export default function BundlesPage() {
+/* ------------------------------------------------------------------ */
+/* Data fetch                                                         */
+/* ------------------------------------------------------------------ */
+async function getBundles() {
+  return prisma.bundle.findMany({
+    include: {
+      _count: { select: { orders: true } }, // sales = #completed orders
+      images: true,
+      reviews: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/* Aggregations                                                       */
+/* ------------------------------------------------------------------ */
+async function getStats(bundles: Awaited<ReturnType<typeof getBundles>>) {
+  const [totalBundles, activeBundles, totalSales, totalRevenue] = await Promise.all([
+    prisma.bundle.count(),
+    prisma.bundle.count({ where: { isActive: true } }),
+    prisma.order.count({ where: { status: 'COMPLETED' } }),
+    prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: 'COMPLETED' } }),
+  ])
+
+  return {
+    totalBundles,
+    activeBundles,
+    totalSales,
+    totalRevenue: totalRevenue._sum.totalAmount?.toNumber() ?? 0,
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                               */
+/* ------------------------------------------------------------------ */
+export default async function BundlesPage() {
+  const bundles = await getBundles()
+  const stats = await getStats(bundles)
+
+  if (!bundles.length) notFound()
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header unchanged */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Bundles</h1>
@@ -130,7 +77,7 @@ export default function BundlesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Bundles</p>
-                <p className="text-2xl font-bold">24</p>
+                <p className="text-2xl font-bold">{stats.totalBundles}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
                 <Download className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -143,7 +90,7 @@ export default function BundlesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active Bundles</p>
-                <p className="text-2xl font-bold">20</p>
+                <p className="text-2xl font-bold">{stats.activeBundles}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -156,7 +103,7 @@ export default function BundlesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Sales</p>
-                <p className="text-2xl font-bold">691</p>
+                <p className="text-2xl font-bold">{stats.totalSales}</p>
               </div>
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
                 <Star className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -169,7 +116,7 @@ export default function BundlesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">$24,891</p>
+                <p className="text-2xl font-bold">₹{stats.totalRevenue.toLocaleString()}</p>
               </div>
               <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
@@ -224,90 +171,106 @@ export default function BundlesPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {bundles.map((bundle) => (
-              <div
-                key={bundle.id}
-                className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="relative w-20 h-12 rounded-lg overflow-hidden border">
-                  <Image src={bundle.image || "/placeholder.svg"} alt={bundle.name} fill className="object-cover" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold truncate">{bundle.name}</h3>
-                    {bundle.featured && (
-                      <Badge variant="secondary" className="text-xs">
-                        Featured
-                      </Badge>
-                    )}
-                    {bundle.bestseller && <Badge className="text-xs bg-orange-500">Bestseller</Badge>}
+            {bundles.map((b) => {
+              const sales = b._count.orders
+              const revenue = sales * Number(b.price)
+              const averageRating = b.reviews.length > 0 
+                ? (b.reviews.reduce((sum, review) => sum + review.rating, 0) / b.reviews.length).toFixed(1)
+                : '0.0'
+              return (
+                <div
+                  key={b.id}
+                  className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="relative w-20 h-12 rounded-lg overflow-hidden border">
+                    <Image
+                      src={b.images[0]?.url ?? '/placeholder.svg'}
+                      alt={b.name}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>{bundle.category}</span>
-                    <span>•</span>
-                    <span>{bundle.sales} sales</span>
-                    <span>•</span>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span>{bundle.rating}</span>
-                      <span>({bundle.reviews})</span>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold truncate">{b.name}</h3>
+                      {b.isFeatured && (
+                        <Badge variant="secondary" className="text-xs">
+                          Featured
+                        </Badge>
+                      )}
+                      {b.isBestseller && (
+                        <Badge className="text-xs bg-orange-500">Bestseller</Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>{b.category}</span>
+                      <span>•</span>
+                      <span>{sales} sales</span>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        <span>{averageRating}</span>
+                        <span>({b.reviews.length})</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="text-right">
-                  <div className="font-semibold">${bundle.price}</div>
-                  {bundle.originalPrice && (
-                    <div className="text-sm text-muted-foreground line-through">${bundle.originalPrice}</div>
-                  )}
-                </div>
+                  <div className="text-right">
+                    <div className="font-semibold">₹{Number(b.price).toFixed(2)}</div>
+                    {b.originalPrice && (
+                      <div className="text-sm text-muted-foreground line-through">
+                        ₹{Number(b.originalPrice).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="text-right">
-                  <div className="font-semibold">${bundle.revenue.toLocaleString()}</div>
-                  <div className="text-sm text-muted-foreground">revenue</div>
-                </div>
+                  <div className="text-right">
+                    <div className="font-semibold">₹{revenue.toLocaleString()}</div>
+                    <div className="text-sm text-muted-foreground">revenue</div>
+                  </div>
 
-                <div className="text-center">
-                  <Badge
-                    variant={
-                      bundle.status === "active" ? "default" : bundle.status === "draft" ? "secondary" : "outline"
-                    }
-                  >
-                    {bundle.status}
-                  </Badge>
-                </div>
+                  <div className="text-center">
+                    <Badge
+                      variant={
+                        b.isActive
+                          ? 'default'
+                          : 'secondary'
+                      }
+                    >
+                      {b.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href={`/bundles/${bundle.slug}`}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/admin/bundles/${bundle.id}/edit`}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/bundles/${b.slug}`}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/bundles/${b.id}/edit`}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Link>
+                      </DropdownMenuItem>
+                      <DeleteBundleDialog bundleId={b.id} bundleName={b.name} />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )
+            })}
           </div>
         </CardContent>
       </Card>
     </div>
   )
 }
+

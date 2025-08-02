@@ -107,7 +107,7 @@ const mockStats = [
   },
   {
     icon: "CheckCircle",
-    value: "$2M+",
+    value: "₹20Cr+",
     label: "Time Saved"
   }
 ]
@@ -314,8 +314,8 @@ export default async function HomePage() {
                       <div className="flex items-center justify-between">
                         <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{bundle.name}</h3>
                         <div className="text-right">
-                          <div className="font-bold text-lg">${bundle.price.toString()}</div>
-                          <div className="text-xs text-muted-foreground line-through">${bundle.originalPrice?.toString()}</div>
+                          <div className="font-bold text-lg">₹{bundle.price.toString()}</div>
+                          <div className="text-xs text-muted-foreground line-through">₹{bundle.originalPrice?.toString()}</div>
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">{bundle.shortDescription}</p>

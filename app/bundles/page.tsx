@@ -218,9 +218,9 @@ export default async function BundlesPage({
                           {bundle.name}
                         </h3>
                         <div className="text-right">
-                          <div className="font-bold text-xl">${bundle.price.toString()}</div>
+                          <div className="font-bold text-xl">₹{bundle.price.toString()}</div>
                           <div className="text-xs text-muted-foreground line-through">
-                            {bundle.originalPrice ? `$${bundle.originalPrice.toString()}` : ''}
+                            {bundle.originalPrice ? `₹${bundle.originalPrice.toString()}` : ''}
                           </div>
                         </div>
                       </div>
@@ -270,7 +270,7 @@ export default async function BundlesPage({
                   <div className="text-center">
                     {bundle.originalPrice && (
                       <span className="text-xs text-green-600 font-medium">
-                        Save ${(Number(bundle.originalPrice) - Number(bundle.price)).toFixed(0)} (
+                        Save ₹{(Number(bundle.originalPrice) - Number(bundle.price)).toFixed(0)} (
                         {Math.round(((Number(bundle.originalPrice) - Number(bundle.price)) / Number(bundle.originalPrice)) * 100)}% off)
                       </span>
                     )}

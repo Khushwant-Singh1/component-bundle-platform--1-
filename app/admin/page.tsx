@@ -303,17 +303,16 @@ export default function AdminDashboard() {
             <Package className="h-8 w-8 mx-auto mb-3 text-blue-500" />
             <h3 className="font-semibold mb-2">Add New Bundle</h3>
             <p className="text-sm text-muted-foreground mb-4">Create and publish a new component bundle</p>
+            <Link href="/admin/bundles/new">
             <Button
               className="w-full"
               onClick={() => {
-                // In a real implementation, this would navigate to the bundle creation page
-                // For now, we'll show an alert to demonstrate functionality
-                alert("Navigating to bundle creation page...")
-                // window.location.href = '/admin/bundles/new'
               }}
             >
               Create Bundle
             </Button>
+                </Link>
+
           </CardContent>
         </Card>
 
