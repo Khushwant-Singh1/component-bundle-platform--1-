@@ -35,11 +35,11 @@ interface PageProps {
 
 export default async function BundleDetailPage({ params }: PageProps) {
   const { id } = await params
-  console.log('Looking for bundle with slug:', id)
+  // console.log('Looking for bundle with slug:', id)
   
   // Let's also check what bundles exist in the database
   const allBundles = await prisma.bundle.findMany({ select: { id: true, slug: true, name: true } })
-  console.log('All bundles in database:', allBundles)
+  // console.log('All bundles in database:', allBundles)
   
   // Try to find by slug first, then by ID if not found
   let bundle = await prisma.bundle.findUnique({
@@ -69,7 +69,7 @@ export default async function BundleDetailPage({ params }: PageProps) {
     })
   }
   
-  console.log('bundle', bundle)
+  // console.log('bundle', bundle)
   if (!bundle) notFound()
 
 
