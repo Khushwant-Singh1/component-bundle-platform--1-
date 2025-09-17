@@ -269,19 +269,15 @@ export async function POST(request: NextRequest) {
         price: validatedData.price,
         originalPrice: validatedData.originalPrice,
         difficulty: validatedData.difficulty,
-        estimatedValue: validatedData.estimatedValue,
         category: validatedData.category,
-        demoUrl: validatedData.demoUrl,
-        githubUrl: validatedData.githubUrl,
-        downloadUrl: validatedData.downloadUrl,
+        setupTime: validatedData.setupTime || "Not specified",
+        estimatedValue: validatedData.estimatedValue && validatedData.estimatedValue !== "" ? validatedData.estimatedValue : null,
+        demoUrl: validatedData.demoUrl && validatedData.demoUrl !== "" ? validatedData.demoUrl : null,
+        githubUrl: validatedData.githubUrl && validatedData.githubUrl !== "" ? validatedData.githubUrl : null,
+        downloadUrl: validatedData.downloadUrl && validatedData.downloadUrl !== "" ? validatedData.downloadUrl : null,
         isActive: validatedData.isActive,
         isFeatured: validatedData.isFeatured,
         isBestseller: validatedData.isBestseller,
-      }
-
-      // Only add setupTime if it exists
-      if (validatedData.setupTime) {
-        bundleData.setupTime = validatedData.setupTime
       }
 
       const newBundle = await tx.bundle.create({

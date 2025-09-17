@@ -1,4 +1,3 @@
-import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/db'
 
 import { Button } from '@/components/ui/button'
@@ -49,12 +48,14 @@ async function getStats(bundles: Awaited<ReturnType<typeof getBundles>>) {
 /* Page                                                               */
 /* ------------------------------------------------------------------ */
 export default async function BundlesPage() {
-  const bundles = await getBundles()
-  const stats = await getStats(bundles)
+  try {
+    const bundles = await getBundles()
+    const stats = await getStats(bundles)
 
-  if (!bundles.length) notFound()
+    // Don't show 404 if no bundles, just show empty state
+    // if (!bundles.length) notFound()
 
-  return (
+    return (
     <div className="space-y-6">
       {/* Header unchanged */}
       <div className="flex items-center justify-between">
@@ -171,7 +172,18 @@ export default async function BundlesPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {bundles.map((b) => {
+            {bundles.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No bundles found. Create your first bundle to get started.</p>
+                <Button asChild className="mt-4">
+                  <Link href="/admin/bundles/new">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Bundle
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              bundles.map((b) => {
               const sales = b._count.orders
               const revenue = sales * Number(b.price)
               const averageRating = b.reviews.length > 0 
@@ -266,11 +278,35 @@ export default async function BundlesPage() {
                   </DropdownMenu>
                 </div>
               )
-            })}
+            })
+            )}
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+    )
+  } catch (error) {
+    console.error('Error loading bundles page:', error)
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Bundles</h1>
+            <p className="text-muted-foreground">Manage your component bundles and templates</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-12">
+              <p className="text-destructive mb-4">Error loading bundles. Please check your database connection.</p>
+              <Button onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 }
 

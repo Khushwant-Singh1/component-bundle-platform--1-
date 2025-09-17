@@ -1,4 +1,5 @@
-import type React from "react"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import Link from "next/link"
 import {
   LayoutDashboard,
@@ -12,11 +13,11 @@ import {
   Star,
   Mail,
   HelpCircle,
-  LogOut,
   Bell,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { SignOutButton } from "@/components/auth/signout-button"
 
 const sidebarItems = [
   {
@@ -80,11 +81,34 @@ const sidebarItems = [
   },
 ]
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  let session
+  
+  try {
+    session = await auth()
+  } catch (error: unknown) {
+    console.error("Auth error:", error)
+    // If it's a JWT error, redirect to login to clear cookies
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    if (errorMessage.includes('JWTSessionError') || errorMessage.includes('no matching decryption secret')) {
+      redirect('/auth/login?error=session_expired')
+    }
+    redirect('/auth/login')
+  }
+  
+  // Redirect to login if not authenticated
+  if (!session) {
+    redirect('/auth/login')
+  }
+  
+  // Redirect to unauthorized if not admin
+  if (session.user?.role !== 'ADMIN') {
+    redirect('/unauthorized')
+  }
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Sidebar */}
@@ -123,14 +147,11 @@ export default function AdminLayout({
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full"></div>
               <div className="flex-1">
-                <p className="text-sm font-medium">Admin User</p>
-                <p className="text-xs text-muted-foreground">admin@bundlehub.com</p>
+                <p className="text-sm font-medium">{session.user.name || 'Admin User'}</p>
+                <p className="text-xs text-muted-foreground">{session.user.email}</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="w-full justify-start">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            <SignOutButton className="w-full justify-start" />
           </div>
         </div>
       </div>

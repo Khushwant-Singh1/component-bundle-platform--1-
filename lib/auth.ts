@@ -1,66 +1,131 @@
-// import type { NextRequest } from "next/server"
-// import { verify } from "jsonwebtoken"
-// import { prisma } from "@/lib/db"
+import NextAuth, { type DefaultSession } from "next-auth"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import CredentialsProvider from "next-auth/providers/credentials"
+import { compare } from "bcryptjs"
+import { prisma } from "@/lib/db"
 
-// export interface AuthUser {
-//   id: string
-//   email: string
-//   role: "ADMIN" | "CUSTOMER"
-// }
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+      role: string
+    } & DefaultSession["user"]
+  }
 
-// /**
-//  * Authenticates a user from the request
-//  * @param request - The Next.js request object
-//  * @returns The authenticated user or null
-//  */
-// export async function authenticateUser(request: NextRequest): Promise<AuthUser | null> {
-//   try {
-//     const token = request.headers.get("authorization")?.replace("Bearer ", "")
+  interface User {
+    role: string
+  }
+}
 
-//     if (!token) {
-//       return null
-//     }
+declare module "next-auth/jwt" {
+  interface JWT {
+    role: string
+  }
+}
 
-//     const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string }
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/auth/login",
+    error: "/auth/login",
+  },
+  providers: [
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
 
-//     const user = await prisma.user.findUnique({
-//       where: { id: decoded.userId },
-//       select: { id: true, email: true, role: true },
-//     })
+        try {
+          const user = await prisma.user.findFirst({
+            where: {
+              email: credentials.email as string,
+              isActive: true,
+            },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              password: true,
+              role: true,
+            },
+          })
 
-//     return user
-//   } catch (error) {
-//     console.error("Authentication error:", error)
-//     return null
-//   }
-// }
+          if (!user?.password) {
+            return null
+          }
 
-// /**
-//  * Middleware to require authentication
-//  * @param request - The Next.js request object
-//  * @returns The authenticated user or throws an error
-//  */
-// export async function requireAuth(request: NextRequest): Promise<AuthUser> {
-//   const user = await authenticateUser(request)
+          const isValid = await compare(credentials.password as string, user.password)
+          
+          if (!isValid) {
+            return null
+          }
 
-//   if (!user) {
-//     throw new Error("Authentication required")
-//   }
+          // Update last login time
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          })
 
-//   return user
-// }
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
+          return null
+        }
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role
+        token.id = user.id
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role as string
+        session.user.id = token.id as string
+      }
+      return session
+    },
+  },
+  events: {
+    async signOut() {
+      // Clear any cached sessions
+    },
+  },
+  debug: process.env.NODE_ENV === "development",
+})
 
-// /**
-//  * Middleware to require admin privileges
-//  * @param request - The Next.js request object
-//  * @returns The authenticated admin user or throws an error
-//  */
-// export async function requireAdmin(request: NextRequest): Promise<AuthUser> {
-//   const user = await requireAuth(request)
+// Helper functions for server-side auth checks
+export async function requireAuth() {
+  const session = await auth()
+  if (!session) {
+    throw new Error("Authentication required")
+  }
+  return session
+}
 
-//   if (user.role !== "ADMIN") {
-//     throw new Error("Admin privileges required")
-//   }
-
-//   return user
-// }
+export async function requireAdmin() {
+  const session = await requireAuth()
+  if (session.user.role !== "ADMIN") {
+    throw new Error("Admin privileges required")
+  }
+  return session
+}

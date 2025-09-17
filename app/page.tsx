@@ -17,7 +17,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { prisma } from "@/lib/db" // Import your Prisma client
 
 // Helper to map string names from DB to actual icon components
 const iconMap = {
@@ -112,21 +111,72 @@ const mockStats = [
   }
 ]
 
-// 1. Make the component an async function
-export default async function HomePage() {
-  // 2. Fetch bundle data from the database
-  const featuredBundles = await prisma.bundle.findMany({
-    where: { isBestseller: false }, // Example: Fetch only bestsellers for the featured section
-    take: 4,
-    include: {
-      images: true,
-      tags: {
-        include: {
-          tag: true
-        }
-      }
-    }
-  })
+// Mock data for featured bundles since we'll fetch them client-side later
+const mockFeaturedBundles = [
+  {
+    id: "1",
+    name: "E-commerce Dashboard",
+    shortDescription: "Complete admin dashboard with analytics, orders, and inventory management",
+    price: "2999",
+    originalPrice: "4999",
+    downloadCount: 1250,
+    isBestseller: true,
+    images: [{ url: "/placeholder.svg" }],
+    tags: [
+      { tag: { id: "1", name: "React" } },
+      { tag: { id: "2", name: "TypeScript" } },
+      { tag: { id: "3", name: "Tailwind" } }
+    ]
+  },
+  {
+    id: "2", 
+    name: "SaaS Landing Page",
+    shortDescription: "Modern landing page with pricing, testimonials, and conversion optimization",
+    price: "1999",
+    originalPrice: "3499",
+    downloadCount: 890,
+    isBestseller: false,
+    images: [{ url: "/placeholder.svg" }],
+    tags: [
+      { tag: { id: "1", name: "Next.js" } },
+      { tag: { id: "2", name: "Framer Motion" } },
+      { tag: { id: "3", name: "SEO" } }
+    ]
+  },
+  {
+    id: "3",
+    name: "Authentication System", 
+    shortDescription: "Complete auth system with login, signup, password reset, and social auth",
+    price: "2499",
+    originalPrice: "4199",
+    downloadCount: 2100,
+    isBestseller: true,
+    images: [{ url: "/placeholder.svg" }],
+    tags: [
+      { tag: { id: "1", name: "NextAuth" } },
+      { tag: { id: "2", name: "Prisma" } },
+      { tag: { id: "3", name: "Security" } }
+    ]
+  },
+  {
+    id: "4",
+    name: "Blog Platform",
+    shortDescription: "Full-featured blog with CMS, comments, and SEO optimization",
+    price: "1799",
+    originalPrice: "2999",
+    downloadCount: 650,
+    isBestseller: false,
+    images: [{ url: "/placeholder.svg" }],
+    tags: [
+      { tag: { id: "1", name: "MDX" } },
+      { tag: { id: "2", name: "CMS" } },
+      { tag: { id: "3", name: "SEO" } }
+    ]
+  }
+]
+
+export default function HomePage() {
+  const featuredBundles = mockFeaturedBundles
 
   // Use mock data for features, testimonials, and stats
   const features = mockFeatures
@@ -283,7 +333,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredBundles.map((bundle) => (
+            {featuredBundles.length > 0 ? featuredBundles.map((bundle) => (
               <Card
                 key={bundle.id}
                 className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-lg overflow-hidden"
@@ -355,7 +405,38 @@ export default async function HomePage() {
                   </Button>
                 </CardFooter>
               </Card>
-            ))}
+            )) : (
+              // Show placeholder cards when no bundles are available
+              [...Array(4)].map((_, index) => (
+                <Card key={index} className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-lg overflow-hidden">
+                  <CardHeader className="p-0 relative">
+                    <div className="aspect-video relative overflow-hidden bg-muted">
+                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                        No bundles available
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-bold text-lg">Sample Bundle {index + 1}</h3>
+                          <div className="text-right">
+                            <div className="font-bold text-lg">₹999</div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Sample bundle description</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="p-6 pt-0">
+                    <Button asChild className="w-full" disabled>
+                      <span>Coming Soon</span>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            )}
           </div>
           <div className="text-center mt-12">
             <Button asChild variant="outline" size="lg" className="border-2">

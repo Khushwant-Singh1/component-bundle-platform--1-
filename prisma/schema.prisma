@@ -12,20 +12,69 @@ datasource db {
 
 // User management
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  avatar    String?
-  role      UserRole @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String?
+  password          String?   @db.VarChar(255) // Hashed password for email/password auth
+  emailVerified     DateTime? @map("email_verified")
+  image             String?   @map("avatar")
+  role              UserRole  @default(CUSTOMER)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  lastLoginAt       DateTime? @map("last_login_at")
+  isActive          Boolean   @default(true) @map("is_active")
+  resetToken        String?   @unique @map("reset_token") @db.VarChar(255)
+  resetTokenExpires DateTime? @map("reset_token_expires")
 
   // Relations
-  orders    Order[]
-  reviews   Review[]
-  downloads Download[]
+  sessions          Session[]
+  accounts          Account[]
+  orders            Order[]
+  reviews           Review[]
+  downloads         Download[]
 
   @@map("users")
+}
+
+// User sessions for authentication
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token") @db.VarChar(255)
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// Account model for OAuth providers
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String  @map("user_id")
+  type               String  @db.VarChar(255)
+  provider           String  @db.VarChar(255)
+  providerAccountId  String  @map("provider_account_id") @db.VarChar(255)
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String? @db.VarChar(50)
+  scope              String? @db.Text
+  id_token           String? @db.Text
+  session_state      String? @db.VarChar(255)
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// Verification tokens for email verification and password reset
+model VerificationToken {
+  identifier String   @db.VarChar(255)
+  token      String   @unique @db.VarChar(255)
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 enum UserRole {
