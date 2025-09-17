@@ -430,7 +430,7 @@ export default function NewBundlePage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="estimatedValue">Estimated Value</Label>
-                      <Input id="estimatedValue" value={formData.estimatedValue} onChange={(e) => handleInputChange("estimatedValue", e.target.value)} placeholder="$2,000+" />
+                      <Input id="estimatedValue" value={formData.estimatedValue} onChange={(e) => handleInputChange("estimatedValue", e.target.value)} placeholder="₹2,00,000+" />
                     </div>
                   </div>
                 </CardContent>
@@ -578,8 +578,8 @@ export default function NewBundlePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    {formData.price && <span className="font-bold text-lg">${formData.price}</span>}
-                    {formData.originalPrice && (<span className="text-sm text-muted-foreground line-through ml-2">${formData.originalPrice}</span>)}
+                    {formData.price && <span className="font-bold text-lg">₹{formData.price}</span>}
+                    {formData.originalPrice && (<span className="text-sm text-muted-foreground line-through ml-2">₹{formData.originalPrice}</span>)}
                   </div>
                   <Badge variant={formData.isActive ? "default" : "secondary"}>{isLoading ? "Saving..." : (formData.isActive ? "Active" : "Draft")}</Badge>
                 </div>

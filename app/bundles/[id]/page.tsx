@@ -93,7 +93,7 @@ export default async function BundleDetailPage({ params }: PageProps) {
     downloads: `${bundle.downloadCount}+`,
     category: bundle.category,
     difficulty: bundle.difficulty,
-    estimatedValue: bundle.estimatedValue ?? '$2,000+',
+    estimatedValue: bundle.estimatedValue ?? '₹2,00,000+',
   }
   
   return (

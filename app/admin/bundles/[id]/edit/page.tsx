@@ -39,7 +39,7 @@ const mockBundleData = {
   category: "fullstack",
   difficulty: "intermediate",
   setupTime: "15 minutes",
-  estimatedValue: "$2,000+",
+  estimatedValue: "₹2,00,000+",
   demoUrl: "https://dashboard-demo.example.com",
   githubUrl: "https://github.com/example/dashboard-pro",
   isActive: true,
@@ -420,7 +420,7 @@ export default function EditBundlePage({ params }: PageProps) {
                         id="estimatedValue"
                         value={formData.estimatedValue}
                         onChange={(e) => handleInputChange("estimatedValue", e.target.value)}
-                        placeholder="$2,000+"
+                        placeholder="₹2,00,000+"
                       />
                     </div>
                   </div>
@@ -740,9 +740,9 @@ export default function EditBundlePage({ params }: PageProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-lg">${formData.price}</span>
+                    <span className="font-bold text-lg">₹{formData.price}</span>
                     {formData.originalPrice && (
-                      <span className="text-sm text-muted-foreground line-through ml-2">${formData.originalPrice}</span>
+                      <span className="text-sm text-muted-foreground line-through ml-2">₹{formData.originalPrice}</span>
                     )}
                   </div>
                   <Badge variant={formData.isActive ? "default" : "secondary"}>

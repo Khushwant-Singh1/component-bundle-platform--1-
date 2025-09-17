@@ -126,7 +126,7 @@ CREATE TABLE "public"."orders" (
     "email" TEXT NOT NULL,
     "status" "public"."OrderStatus" NOT NULL DEFAULT 'PENDING',
     "totalAmount" DECIMAL(10,2) NOT NULL,
-    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "currency" TEXT NOT NULL DEFAULT 'INR',
     "paymentMethod" TEXT,
     "paymentId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

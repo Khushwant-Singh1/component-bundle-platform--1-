@@ -210,7 +210,7 @@ model Order {
   email         String
   status        OrderStatus @default(PENDING)
   totalAmount   Decimal     @db.Decimal(10, 2)
-  currency      String      @default("USD")
+  currency      String      @default("INR")
   paymentMethod String?
   paymentId     String?     @unique
   createdAt     DateTime    @default(now())

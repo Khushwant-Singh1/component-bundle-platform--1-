@@ -113,7 +113,7 @@ const orderStats = [
   },
   {
     title: "Total Revenue",
-    value: "$47,892",
+    value: "₹47,892",
     change: "+15.3%",
     icon: DollarSign,
     color: "purple",
