@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Authentication
-    const user = await requireAuth(request)
+    const session = await requireAuth()
 
     // Parse and validate request body
     const body = await request.json()
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const existingReview = await prisma.review.findUnique({
       where: {
         userId_bundleId: {
-          userId: user.id,
+          userId: session.user.id,
           bundleId: validatedData.bundleId,
         },
       },
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     // Create review
     const review = await prisma.review.create({
       data: {
-        userId: user.id,
+        userId: session.user.id,
         bundleId: validatedData.bundleId,
         rating: validatedData.rating,
         title: validatedData.title,

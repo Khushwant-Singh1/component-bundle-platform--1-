@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Authentication (optional for orders)
-    const user = await requireAuth(request)
+    const session = await requireAuth()
 
     // Parse and validate request body
     const body = await request.json()
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       // Create the order
       const newOrder = await tx.order.create({
         data: {
-          userId: user.id,
+          userId: session.user.id,
           email: validatedData.email,
           totalAmount,
           paymentMethod: validatedData.paymentMethod,

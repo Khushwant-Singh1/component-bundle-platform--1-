@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ArrowLeft, Upload, X, Plus, Save, Eye, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -114,12 +113,23 @@ const availableTech = [
 ]
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function EditBundlePage({ params }: PageProps) {
+  const [id, setId] = useState<string>("")
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // Handle the Promise params in useEffect
+  useEffect(() => {
+    params.then((resolvedParams) => {
+      setId(resolvedParams.id)
+      setIsLoading(false)
+    })
+  }, [params])
+  
   const [formData, setFormData] = useState(mockBundleData)
   const [selectedTags, setSelectedTags] = useState<string[]>(mockBundleData.tags)
   const [selectedTech, setSelectedTech] = useState<string[]>(mockBundleData.techStack)
@@ -129,7 +139,7 @@ export default function EditBundlePage({ params }: PageProps) {
   const [newImages, setNewImages] = useState<File[]>([])
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({
+    setFormData((prev: typeof mockBundleData) => ({
       ...prev,
       [field]: value,
     }))
@@ -140,7 +150,7 @@ export default function EditBundlePage({ params }: PageProps) {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "")
-      setFormData((prev) => ({
+      setFormData((prev: typeof mockBundleData) => ({
         ...prev,
         slug,
       }))
@@ -154,7 +164,7 @@ export default function EditBundlePage({ params }: PageProps) {
   }
 
   const removeTag = (tag: string) => {
-    setSelectedTags(selectedTags.filter((t) => t !== tag))
+    setSelectedTags(selectedTags.filter((t: string) => t !== tag))
   }
 
   const addTech = (tech: string) => {
@@ -164,7 +174,7 @@ export default function EditBundlePage({ params }: PageProps) {
   }
 
   const removeTech = (tech: string) => {
-    setSelectedTech(selectedTech.filter((t) => t !== tech))
+    setSelectedTech(selectedTech.filter((t: string) => t !== tech))
   }
 
   const addFeature = () => {
@@ -178,7 +188,7 @@ export default function EditBundlePage({ params }: PageProps) {
   }
 
   const removeFeature = (index: number) => {
-    setFeatures(features.filter((_, i) => i !== index))
+    setFeatures(features.filter((_: string, i: number) => i !== index))
   }
 
   const addInclude = () => {
@@ -192,7 +202,7 @@ export default function EditBundlePage({ params }: PageProps) {
   }
 
   const removeInclude = (index: number) => {
-    setIncludes(includes.filter((_, i) => i !== index))
+    setIncludes(includes.filter((_: string, i: number) => i !== index))
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,11 +212,11 @@ export default function EditBundlePage({ params }: PageProps) {
   }
 
   const removeExistingImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index))
+    setImages(images.filter((_: string, i: number) => i !== index))
   }
 
   const removeNewImage = (index: number) => {
-    setNewImages(newImages.filter((_, i) => i !== index))
+    setNewImages(newImages.filter((_: File, i: number) => i !== index))
   }
 
   const handleUpdate = () => {
@@ -214,8 +224,8 @@ export default function EditBundlePage({ params }: PageProps) {
       ...formData,
       tags: selectedTags,
       techStack: selectedTech,
-      features: features.filter((f) => f.trim() !== ""),
-      includes: includes.filter((i) => i.trim() !== ""),
+      features: features.filter((f: string) => f.trim() !== ""),
+      includes: includes.filter((i: string) => i.trim() !== ""),
       existingImages: images,
       newImages,
     }
@@ -225,9 +235,20 @@ export default function EditBundlePage({ params }: PageProps) {
   }
 
   const handleDelete = () => {
-    console.log("Deleting bundle:", params.id)
+    console.log("Deleting bundle:", id)
     alert("Bundle deleted successfully!")
     // In real app: router.push('/admin/bundles')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading bundle...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -435,7 +456,7 @@ export default function EditBundlePage({ params }: PageProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    {selectedTags.map((tag) => (
+                    {selectedTags.map((tag: string) => (
                       <Badge key={tag} variant="secondary" className="flex items-center gap-1">
                         {tag}
                         <X className="h-3 w-3 cursor-pointer" onClick={() => removeTag(tag)} />
@@ -465,7 +486,7 @@ export default function EditBundlePage({ params }: PageProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    {selectedTech.map((tech) => (
+                    {selectedTech.map((tech: string) => (
                       <Badge key={tech} variant="outline" className="flex items-center gap-1">
                         {tech}
                         <X className="h-3 w-3 cursor-pointer" onClick={() => removeTech(tech)} />
@@ -494,7 +515,7 @@ export default function EditBundlePage({ params }: PageProps) {
                   <CardTitle>Features</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {features.map((feature, index) => (
+                  {features.map((feature: string, index: number) => (
                     <div key={index} className="flex items-center gap-2">
                       <Input
                         value={feature}
@@ -523,7 +544,7 @@ export default function EditBundlePage({ params }: PageProps) {
                   <CardTitle>What's Included</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {includes.map((include, index) => (
+                  {includes.map((include: string, index: number) => (
                     <div key={index} className="flex items-center gap-2">
                       <Input
                         value={include}
@@ -556,7 +577,7 @@ export default function EditBundlePage({ params }: PageProps) {
                 <CardContent className="space-y-4">
                   {images.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {images.map((image, index) => (
+                      {images.map((image: string, index: number) => (
                         <div key={index} className="relative group">
                           <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                             <span className="text-sm text-muted-foreground">{image}</span>
@@ -605,7 +626,7 @@ export default function EditBundlePage({ params }: PageProps) {
 
                   {newImages.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {newImages.map((image, index) => (
+                      {newImages.map((image: File, index: number) => (
                         <div key={index} className="relative group">
                           <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                             <span className="text-sm text-muted-foreground">{image.name}</span>

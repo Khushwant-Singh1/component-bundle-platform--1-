@@ -74,6 +74,6 @@ export const uploadRateLimit = new RateLimiter({
  * @returns Rate limit result
  */
 export function rateLimit(request: NextRequest, limiter: RateLimiter) {
-  const key = request.headers.get("x-forwarded-for") || request.ip || "unknown"
+  const key = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
   return limiter.check(key)
 }

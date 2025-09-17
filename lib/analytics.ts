@@ -9,7 +9,7 @@ import type { NextRequest } from "next/server"
  */
 export async function trackPageView(request: NextRequest, page: string, bundleId?: string) {
   try {
-    const ipAddress = request.headers.get("x-forwarded-for") || request.ip || "unknown"
+    const ipAddress = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
     const userAgent = request.headers.get("user-agent") || "unknown"
     const referer = request.headers.get("referer") || undefined
 
@@ -35,7 +35,7 @@ export async function trackPageView(request: NextRequest, page: string, bundleId
  */
 export async function trackDownload(userId: string, bundleId: string, request: NextRequest) {
   try {
-    const ipAddress = request.headers.get("x-forwarded-for") || request.ip || "unknown"
+    const ipAddress = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
     const userAgent = request.headers.get("user-agent") || "unknown"
 
     await prisma.download.create({

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Authentication and authorization
-    const user = await requireAdmin(request)
+    const user = await requireAdmin()
 
     // Parse form data
     const formData = await request.formData()
