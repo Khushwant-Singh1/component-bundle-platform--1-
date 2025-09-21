@@ -114,7 +114,6 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    const errorResponse = handleError(error)
-    return NextResponse.json(errorResponse, { status: errorResponse.error.statusCode })
+    return handleError(error)
   }
 }

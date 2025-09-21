@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { MainNavigation } from "@/components/main-navigation"
 
 // Helper to map string names from DB to actual icon components
 const iconMap = {
@@ -185,28 +186,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Navigation (no changes) */}
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link
-            href="/"
-            className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-          >
-            BundleHub
-          </Link>
-          <div className="hidden md:flex items-center space-x-8">
-            <Link href="/bundles" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Bundles
-            </Link>
-            <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Contact
-            </Link>
-            <Button size="sm" asChild>
-              <Link href="/bundles">Get Started</Link>
-            </Button>
-          </div>
-        </div>
-      </nav>
+      {/* Navigation */}
+      <MainNavigation />
 
       {/* Hero Section */}
       <section className="relative py-20 lg:py-32 overflow-hidden">

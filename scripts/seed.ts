@@ -223,6 +223,7 @@ async function main() {
     data: {
       userId: customer.id,
       email: customer.email,
+      customerName: customer.name || "John Doe",
       status: "COMPLETED",
       totalAmount: 49.0,
       paymentMethod: "stripe",

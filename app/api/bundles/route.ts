@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { createBundleSchema, bundleQuerySchema } from "@/lib/validation"
-// import { requireAdmin } from "@/lib/auth"
+import { requireAdmin } from "@/lib/auth"
 import { handleError, ConflictError } from "@/lib/errors"
 import { rateLimit, generalRateLimit } from "@/lib/rate-limit"
 import { trackPageView } from "@/lib/analytics"
@@ -191,8 +191,7 @@ export async function GET(request: NextRequest) {
       },
     )
   } catch (error) {
-    const errorResponse = handleError(error)
-    return NextResponse.json(errorResponse, { status: errorResponse.error.statusCode })
+    return handleError(error)
   }
 }
 
@@ -242,8 +241,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Authentication and authorization
-    // const user = await requireAdmin(request)
+        // Authentication and authorization
+    const user = await requireAdmin()
 
     // Parse and validate request body
     const body = await request.json()
@@ -384,7 +383,6 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
   } catch (error) {
-    const errorResponse = handleError(error)
-    return NextResponse.json(errorResponse, { status: errorResponse.error.statusCode })
+    return handleError(error)
   }
 }

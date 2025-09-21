@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server"
+
 export class AppError extends Error {
   public statusCode: number
   public isOperational: boolean
@@ -62,30 +64,39 @@ export function handleError(error: unknown) {
   console.error("Error:", error)
 
   if (error instanceof AppError) {
-    return {
-      success: false,
-      error: {
-        message: error.message,
-        statusCode: error.statusCode,
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          message: error.message,
+          statusCode: error.statusCode,
+        },
       },
-    }
+      { status: error.statusCode }
+    )
   }
 
   if (error instanceof Error) {
-    return {
-      success: false,
-      error: {
-        message: error.message,
-        statusCode: 500,
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          message: error.message,
+          statusCode: 500,
+        },
       },
-    }
+      { status: 500 }
+    )
   }
 
-  return {
-    success: false,
-    error: {
-      message: "An unexpected error occurred",
-      statusCode: 500,
+  return NextResponse.json(
+    {
+      success: false,
+      error: {
+        message: "An unexpected error occurred",
+        statusCode: 500,
+      },
     },
-  }
+    { status: 500 }
+  )
 }

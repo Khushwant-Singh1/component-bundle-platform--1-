@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, Upload, X, Plus, Save, Eye, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,40 +27,36 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-// Mock data - in real app this would come from API
-const mockBundleData = {
-  id: 1,
-  name: "Dashboard Pro",
-  slug: "dashboard-pro",
-  shortDescription: "Complete admin dashboard solution with analytics and user management",
-  description:
-    "Dashboard Pro is a comprehensive admin dashboard solution built with Next.js 14, TypeScript, and Tailwind CSS. It includes everything you need to build a modern, responsive admin interface with real-time analytics, user management, and beautiful data visualizations.",
-  price: "49",
-  originalPrice: "79",
-  category: "fullstack",
-  difficulty: "intermediate",
-  setupTime: "15 minutes",
-  estimatedValue: "₹2,00,000+",
-  demoUrl: "https://dashboard-demo.example.com",
-  githubUrl: "https://github.com/example/dashboard-pro",
-  isActive: true,
-  isFeatured: true,
-  isBestseller: true,
-  tags: ["Next.js", "Dashboard", "Charts", "TypeScript", "Tailwind CSS"],
-  techStack: ["Next.js 14", "TypeScript", "Tailwind CSS", "Recharts", "Prisma"],
-  features: [
-    "Responsive dashboard layout with sidebar navigation",
-    "Interactive charts and analytics with Recharts",
-    "Complete user management system with CRUD operations",
-    "Dark/light mode support with theme persistence",
-  ],
-  includes: [
-    "Complete source code with TypeScript",
-    "Comprehensive documentation (50+ pages)",
-    "Video setup tutorial (45 minutes)",
-    "6 months of free updates",
-  ],
-  images: ["image1.jpg", "image2.jpg", "image3.jpg"],
+interface Bundle {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  difficulty: string;
+  setupTime?: string;
+  estimatedValue?: string;
+  demoUrl?: string;
+  githubUrl?: string;
+  downloadUrl?: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  isBestseller: boolean;
+  tags: string[];
+  techStack: string[];
+  features: string[];
+  includes: string[];
+  images: string[];
+  createdAt: string;
+  updatedAt: string;
+  stats?: {
+    reviewCount: number;
+    salesCount: number;
+    downloadCount: number;
+  };
 }
 
 const availableTags = [
@@ -119,30 +117,128 @@ interface PageProps {
 }
 
 export default function EditBundlePage({ params }: PageProps) {
+  const router = useRouter()
   const [id, setId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [bundle, setBundle] = useState<Bundle | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   
   // Handle the Promise params in useEffect
   useEffect(() => {
     params.then((resolvedParams) => {
       setId(resolvedParams.id)
-      setIsLoading(false)
+      fetchBundle(resolvedParams.id)
     })
   }, [params])
   
-  const [formData, setFormData] = useState(mockBundleData)
-  const [selectedTags, setSelectedTags] = useState<string[]>(mockBundleData.tags)
-  const [selectedTech, setSelectedTech] = useState<string[]>(mockBundleData.techStack)
-  const [features, setFeatures] = useState<string[]>(mockBundleData.features)
-  const [includes, setIncludes] = useState<string[]>(mockBundleData.includes)
-  const [images, setImages] = useState<string[]>(mockBundleData.images)
+  const [formData, setFormData] = useState({
+    name: "",
+    slug: "",
+    shortDescription: "",
+    description: "",
+    price: 0,
+    originalPrice: 0,
+    category: "",
+    difficulty: "",
+    setupTime: "",
+    estimatedValue: "",
+    demoUrl: "",
+    githubUrl: "",
+    downloadUrl: "",
+    isActive: true,
+    isFeatured: false,
+    isBestseller: false,
+  })
+  
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedTech, setSelectedTech] = useState<string[]>([])
+  const [features, setFeatures] = useState<string[]>([""])
+  const [includes, setIncludes] = useState<string[]>([""])
+  const [images, setImages] = useState<string[]>([])
   const [newImages, setNewImages] = useState<File[]>([])
+  const [newZipFile, setNewZipFile] = useState<File | null>(null)
+  const [currentZipFileName, setCurrentZipFileName] = useState<string>("")
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev: typeof mockBundleData) => ({
+  const fetchBundle = async (bundleId: string) => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/bundles/${bundleId}`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch bundle')
+      }
+      
+      const result = await response.json()
+      
+      if (result.success && result.data) {
+        const bundleData = result.data
+        setBundle(bundleData)
+        
+        // Populate form data
+        setFormData({
+          name: bundleData.name || "",
+          slug: bundleData.slug || "",
+          shortDescription: bundleData.shortDescription || "",
+          description: bundleData.description || "",
+          price: bundleData.price || 0,
+          originalPrice: bundleData.originalPrice || 0,
+          category: bundleData.category || "",
+          difficulty: bundleData.difficulty?.toLowerCase() || "",
+          setupTime: bundleData.setupTime || "",
+          estimatedValue: bundleData.estimatedValue || "",
+          demoUrl: bundleData.demoUrl || "",
+          githubUrl: bundleData.githubUrl || "",
+          downloadUrl: bundleData.downloadUrl || "",
+          isActive: bundleData.isActive ?? true,
+          isFeatured: bundleData.isFeatured ?? false,
+          isBestseller: bundleData.isBestseller ?? false,
+        })
+        
+        setSelectedTags(bundleData.tags || [])
+        setSelectedTech(bundleData.techStack || [])
+        setFeatures(bundleData.features?.length > 0 ? bundleData.features : [""])
+        setIncludes(bundleData.includes?.length > 0 ? bundleData.includes : [""])
+        setImages(bundleData.images || [])
+        
+        // Extract ZIP file name from downloadUrl if it exists
+        if (bundleData.downloadUrl && bundleData.downloadUrl.startsWith('s3://')) {
+          const s3Key = bundleData.downloadUrl.replace('s3://', '')
+          const fileName = s3Key.split('/').pop() || 'bundle.zip'
+          setCurrentZipFileName(fileName)
+        } else if (bundleData.downloadUrl) {
+          setCurrentZipFileName('bundle.zip')
+        }
+      } else {
+        throw new Error(result.error?.message || 'Failed to fetch bundle')
+      }
+    } catch (error) {
+      console.error('Error fetching bundle:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load bundle data",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleInputChange = (field: string, value: string | boolean | number) => {
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }))
+
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
 
     // Auto-generate slug from name
     if (field === "name" && typeof value === "string") {
@@ -150,10 +246,19 @@ export default function EditBundlePage({ params }: PageProps) {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "")
-      setFormData((prev: typeof mockBundleData) => ({
+      setFormData((prev) => ({
         ...prev,
         slug,
       }))
+      
+      // Clear slug error too
+      if (errors.slug) {
+        setErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors.slug
+          return newErrors
+        })
+      }
     }
   }
 
@@ -205,9 +310,10 @@ export default function EditBundlePage({ params }: PageProps) {
     setIncludes(includes.filter((_: string, i: number) => i !== index))
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setNewImages([...newImages, ...Array.from(e.target.files)])
+      const files = Array.from(e.target.files)
+      setNewImages([...newImages, ...files])
     }
   }
 
@@ -219,25 +325,262 @@ export default function EditBundlePage({ params }: PageProps) {
     setNewImages(newImages.filter((_: File, i: number) => i !== index))
   }
 
-  const handleUpdate = () => {
-    const bundleData = {
-      ...formData,
-      tags: selectedTags,
-      techStack: selectedTech,
-      features: features.filter((f: string) => f.trim() !== ""),
-      includes: includes.filter((i: string) => i.trim() !== ""),
-      existingImages: images,
-      newImages,
+  const handleZipUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      
+      // Validate file type
+      if (!file.name.toLowerCase().endsWith('.zip')) {
+        toast({
+          title: "Invalid File Type",
+          description: "Only ZIP files are allowed",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      setNewZipFile(file)
+      
+      // Clear any existing errors
+      if (errors.zipFile) {
+        setErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors.zipFile
+          return newErrors
+        })
+      }
     }
-
-    console.log("Updated bundle data:", bundleData)
-    alert("Bundle updated successfully!")
   }
 
-  const handleDelete = () => {
-    console.log("Deleting bundle:", id)
-    alert("Bundle deleted successfully!")
-    // In real app: router.push('/admin/bundles')
+  const removeNewZipFile = () => {
+    setNewZipFile(null)
+  }
+
+  const uploadImageToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'mypresent')
+    
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload image')
+      }
+      
+      const data = await response.json()
+      return data.secure_url
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      throw error
+    }
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Bundle name is required"
+    }
+
+    if (!formData.slug.trim()) {
+      newErrors.slug = "URL slug is required"
+    } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
+      newErrors.slug = "Slug must contain only lowercase letters, numbers, and hyphens"
+    }
+
+    if (!formData.shortDescription.trim()) {
+      newErrors.shortDescription = "Short description is required"
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required"
+    }
+
+    if (!formData.category) {
+      newErrors.category = "Category is required"
+    }
+
+    if (!formData.difficulty) {
+      newErrors.difficulty = "Difficulty is required"
+    }
+
+    if (formData.price <= 0) {
+      newErrors.price = "Price must be greater than 0"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleUpdate = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setIsSaving(true)
+
+      // Upload new images to Cloudinary
+      let uploadedImageUrls: string[] = []
+      if (newImages.length > 0) {
+        toast({
+          title: "Uploading images...",
+          description: "Please wait while we upload your images",
+        })
+
+        uploadedImageUrls = await Promise.all(
+          newImages.map(file => uploadImageToCloudinary(file))
+        )
+      }
+
+      // Upload new ZIP file to S3 if provided
+      let newDownloadUrl = formData.downloadUrl
+      if (newZipFile) {
+        toast({
+          title: "Uploading ZIP file...",
+          description: "Please wait while we upload your bundle file",
+        })
+
+        try {
+          // Upload ZIP file via API route
+          const uploadFormData = new FormData()
+          uploadFormData.append('file', newZipFile)
+          uploadFormData.append('bundleSlug', formData.slug)
+
+          const uploadResponse = await fetch('/api/upload/bundle', {
+            method: 'POST',
+            body: uploadFormData,
+          })
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json()
+            throw new Error(errorData.error || 'Failed to upload ZIP file')
+          }
+
+          const uploadResult = await uploadResponse.json()
+          newDownloadUrl = `s3://${uploadResult.objectKey}`
+        } catch (error) {
+          console.error("ZIP file upload failed:", error)
+          toast({
+            title: "Upload Error",
+            description: `Failed to upload ZIP file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            variant: "destructive",
+          })
+          return
+        }
+      }
+
+      // Prepare bundle data for API
+      const bundleData = {
+        name: formData.name,
+        slug: formData.slug,
+        shortDescription: formData.shortDescription,
+        description: formData.description,
+        price: Number(formData.price),
+        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
+        category: formData.category,
+        difficulty: formData.difficulty.toUpperCase(),
+        setupTime: formData.setupTime || undefined,
+        estimatedValue: formData.estimatedValue || undefined,
+        demoUrl: formData.demoUrl || undefined,
+        githubUrl: formData.githubUrl || undefined,
+        downloadUrl: newDownloadUrl || undefined,
+        isActive: formData.isActive,
+        isFeatured: formData.isFeatured,
+        isBestseller: formData.isBestseller,
+        tags: selectedTags,
+        techStack: selectedTech,
+        features: features.filter((f: string) => f.trim() !== ""),
+        includes: includes.filter((i: string) => i.trim() !== ""),
+        images: [...images, ...uploadedImageUrls],
+      }
+
+      const response = await fetch(`/api/bundles/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bundleData),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error?.message || 'Failed to update bundle')
+      }
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Bundle updated successfully!",
+        })
+        
+        // Clear new images since they're now saved
+        setNewImages([])
+        setNewZipFile(null)
+        
+        // Refresh bundle data
+        await fetchBundle(id)
+      } else {
+        throw new Error(result.error?.message || 'Failed to update bundle')
+      }
+    } catch (error) {
+      console.error('Error updating bundle:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update bundle",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+
+      const response = await fetch(`/api/bundles/${id}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error?.message || 'Failed to delete bundle')
+      }
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Bundle deleted successfully!",
+        })
+        router.push('/admin/bundles')
+      } else {
+        throw new Error(result.error?.message || 'Failed to delete bundle')
+      }
+    } catch (error) {
+      console.error('Error deleting bundle:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete bundle",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (isLoading) {
@@ -246,6 +589,23 @@ export default function EditBundlePage({ params }: PageProps) {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading bundle...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!bundle) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Bundle Not Found</h2>
+          <p className="text-muted-foreground mb-4">The bundle you're looking for doesn't exist.</p>
+          <Button asChild>
+            <Link href="/admin/bundles">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Bundles
+            </Link>
+          </Button>
         </div>
       </div>
     )
@@ -287,8 +647,9 @@ export default function EditBundlePage({ params }: PageProps) {
                 <AlertDialogAction
                   onClick={handleDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeleting}
                 >
-                  Delete Bundle
+                  {isDeleting ? "Deleting..." : "Delete Bundle"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -299,9 +660,9 @@ export default function EditBundlePage({ params }: PageProps) {
               Preview
             </Link>
           </Button>
-          <Button onClick={handleUpdate}>
+          <Button onClick={handleUpdate} disabled={isSaving || isDeleting}>
             <Save className="h-4 w-4 mr-2" />
-            Update Bundle
+            {isSaving ? "Updating..." : "Update Bundle"}
           </Button>
         </div>
       </div>
@@ -331,7 +692,9 @@ export default function EditBundlePage({ params }: PageProps) {
                         value={formData.name}
                         onChange={(e) => handleInputChange("name", e.target.value)}
                         placeholder="Dashboard Pro"
+                        className={errors.name ? "border-destructive" : ""}
                       />
+                      {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="slug">URL Slug *</Label>
@@ -340,7 +703,9 @@ export default function EditBundlePage({ params }: PageProps) {
                         value={formData.slug}
                         onChange={(e) => handleInputChange("slug", e.target.value)}
                         placeholder="dashboard-pro"
+                        className={errors.slug ? "border-destructive" : ""}
                       />
+                      {errors.slug && <p className="text-sm text-destructive">{errors.slug}</p>}
                     </div>
                   </div>
 
@@ -351,7 +716,9 @@ export default function EditBundlePage({ params }: PageProps) {
                       value={formData.shortDescription}
                       onChange={(e) => handleInputChange("shortDescription", e.target.value)}
                       placeholder="Complete admin dashboard solution with analytics and user management"
+                      className={errors.shortDescription ? "border-destructive" : ""}
                     />
+                    {errors.shortDescription && <p className="text-sm text-destructive">{errors.shortDescription}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -362,14 +729,16 @@ export default function EditBundlePage({ params }: PageProps) {
                       onChange={(e) => handleInputChange("description", e.target.value)}
                       placeholder="Detailed description of your bundle, its features, and benefits..."
                       rows={6}
+                      className={errors.description ? "border-destructive" : ""}
                     />
+                    {errors.description && <p className="text-sm text-destructive">{errors.description}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="category">Category *</Label>
                       <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
-                        <SelectTrigger>
+                        <SelectTrigger className={errors.category ? "border-destructive" : ""}>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -379,6 +748,7 @@ export default function EditBundlePage({ params }: PageProps) {
                           <SelectItem value="mobile">Mobile</SelectItem>
                         </SelectContent>
                       </Select>
+                      {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="difficulty">Difficulty *</Label>
@@ -386,7 +756,7 @@ export default function EditBundlePage({ params }: PageProps) {
                         value={formData.difficulty}
                         onValueChange={(value) => handleInputChange("difficulty", value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={errors.difficulty ? "border-destructive" : ""}>
                           <SelectValue placeholder="Select difficulty" />
                         </SelectTrigger>
                         <SelectContent>
@@ -395,6 +765,7 @@ export default function EditBundlePage({ params }: PageProps) {
                           <SelectItem value="advanced">Advanced</SelectItem>
                         </SelectContent>
                       </Select>
+                      {errors.difficulty && <p className="text-sm text-destructive">{errors.difficulty}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="setupTime">Setup Time</Label>
@@ -420,18 +791,24 @@ export default function EditBundlePage({ params }: PageProps) {
                       <Input
                         id="price"
                         type="number"
+                        min="0"
+                        step="0.01"
                         value={formData.price}
-                        onChange={(e) => handleInputChange("price", e.target.value)}
+                        onChange={(e) => handleInputChange("price", parseFloat(e.target.value) || 0)}
                         placeholder="49"
+                        className={errors.price ? "border-destructive" : ""}
                       />
+                      {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="originalPrice">Original Price</Label>
                       <Input
                         id="originalPrice"
                         type="number"
+                        min="0"
+                        step="0.01"
                         value={formData.originalPrice}
-                        onChange={(e) => handleInputChange("originalPrice", e.target.value)}
+                        onChange={(e) => handleInputChange("originalPrice", parseFloat(e.target.value) || 0)}
                         placeholder="79"
                       />
                     </div>
@@ -648,6 +1025,90 @@ export default function EditBundlePage({ params }: PageProps) {
                   )}
                 </CardContent>
               </Card>
+
+              {/* ZIP File Management */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Bundle ZIP File</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Current ZIP File Info */}
+                  {currentZipFileName && (
+                    <div className="bg-muted p-4 rounded-lg">
+                      <h4 className="font-medium mb-2">Current Bundle File</h4>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-blue-600 font-medium text-sm">ZIP</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">{currentZipFileName}</p>
+                          <p className="text-sm text-muted-foreground">Currently active bundle file</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Upload New ZIP File */}
+                  <div>
+                    <h4 className="font-medium mb-3">
+                      {currentZipFileName ? 'Replace Bundle File' : 'Upload Bundle File'}
+                    </h4>
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                      <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                      <div className="space-y-2">
+                        <p className="font-medium">
+                          {currentZipFileName ? 'Upload New ZIP File' : 'Upload Bundle ZIP File'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {currentZipFileName 
+                            ? 'Select a new ZIP file to replace the current bundle' 
+                            : 'Upload the complete bundle source code as a ZIP file'
+                          }
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        accept=".zip"
+                        onChange={handleZipUpload}
+                        className="hidden"
+                        id="zip-upload"
+                      />
+                      <Button asChild variant="outline" className="mt-3">
+                        <label htmlFor="zip-upload" className="cursor-pointer">
+                          Choose ZIP File
+                        </label>
+                      </Button>
+                    </div>
+
+                    {/* New ZIP File Preview */}
+                    {newZipFile && (
+                      <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                              <span className="text-green-600 font-medium text-sm">ZIP</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-green-800">{newZipFile.name}</p>
+                              <p className="text-sm text-green-600">
+                                {(newZipFile.size / 1024 / 1024).toFixed(2)} MB - Ready to upload on save
+                              </p>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={removeNewZipFile}
+                            className="text-green-700 hover:text-green-900"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="advanced" className="space-y-6">
@@ -721,27 +1182,23 @@ export default function EditBundlePage({ params }: PageProps) {
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Total Sales:</span>
-                <span className="font-semibold">156</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Revenue:</span>
-                <span className="font-semibold">$7,644</span>
+                <span className="font-semibold">{bundle.stats?.salesCount || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Downloads:</span>
-                <span className="font-semibold">2,500+</span>
+                <span className="font-semibold">{bundle.stats?.downloadCount || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Rating:</span>
-                <span className="font-semibold">4.9/5 (127 reviews)</span>
+                <span className="text-sm text-muted-foreground">Reviews:</span>
+                <span className="font-semibold">{bundle.stats?.reviewCount || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Created:</span>
-                <span className="font-semibold">Jan 15, 2024</span>
+                <span className="font-semibold">{new Date(bundle.createdAt).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Last Updated:</span>
-                <span className="font-semibold">Jan 20, 2024</span>
+                <span className="font-semibold">{new Date(bundle.updatedAt).toLocaleDateString()}</span>
               </div>
             </CardContent>
           </Card>
@@ -762,7 +1219,7 @@ export default function EditBundlePage({ params }: PageProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="font-bold text-lg">₹{formData.price}</span>
-                    {formData.originalPrice && (
+                    {formData.originalPrice && formData.originalPrice > 0 && (
                       <span className="text-sm text-muted-foreground line-through ml-2">₹{formData.originalPrice}</span>
                     )}
                   </div>

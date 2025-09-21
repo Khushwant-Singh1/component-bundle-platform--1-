@@ -15,6 +15,7 @@ import { rateLimit, generalRateLimit } from "@/lib/rate-limit"
  *     bundleId: string,
  *     quantity: number
  *   }>,
+ *   customerName: string,
  *   email: string,
  *   paymentMethod: string
  * }
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
       const newOrder = await tx.order.create({
         data: {
           userId: session.user.id,
+          customerName: validatedData.customerName,
           email: validatedData.email,
           totalAmount,
           paymentMethod: validatedData.paymentMethod,
@@ -128,7 +130,6 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
   } catch (error) {
-    const errorResponse = handleError(error)
-    return NextResponse.json(errorResponse, { status: errorResponse.error.statusCode })
+    return handleError(error)
   }
 }

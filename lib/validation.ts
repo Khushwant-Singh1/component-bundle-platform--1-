@@ -88,6 +88,7 @@ export const createOrderSchema = z.object({
       quantity: z.number().min(1).default(1),
     }),
   ),
+  customerName: z.string().min(1, "Customer name is required"),
   email: z.string().email("Valid email is required"),
   paymentMethod: z.string().min(1, "Payment method is required"),
 })

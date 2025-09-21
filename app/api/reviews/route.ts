@@ -92,7 +92,6 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
   } catch (error) {
-    const errorResponse = handleError(error)
-    return NextResponse.json(errorResponse, { status: errorResponse.error.statusCode })
+    return handleError(error)
   }
 }

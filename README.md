@@ -92,13 +92,23 @@ A comprehensive backend system for managing component bundles, built with Next.j
    # JWT Secret
    JWT_SECRET="your-super-secret-jwt-key-here"
    
-   # File Upload
+   # AWS S3 Configuration (for file uploads)
+   AWS_REGION="us-east-1"
+   AWS_ACCESS_KEY_ID="your-aws-access-key-id"
+   AWS_SECRET_ACCESS_KEY="your-aws-secret-access-key"
+   AWS_S3_BUCKET_NAME="your-s3-bucket-name"
+   
+   # File Upload (local fallback)
    UPLOAD_DIR="./public/uploads"
    MAX_FILE_SIZE=10485760  # 10MB
    
    # Rate Limiting
    RATE_LIMIT_WINDOW=900000  # 15 minutes
    RATE_LIMIT_MAX=100
+   
+   # Cloudinary Configuration (for bundle images)
+   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
+   NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your-upload-preset"
    
    # Email (optional)
    SMTP_HOST="smtp.example.com"
@@ -157,6 +167,20 @@ A comprehensive backend system for managing component bundles, built with Next.j
 \`\`\`
 
 ## 🔧 Configuration
+
+### AWS S3 Setup
+For payment screenshot uploads, configure AWS S3 by following the detailed guide:
+📋 **[AWS S3 Setup Guide](./AWS_S3_SETUP.md)**
+
+Key benefits of using S3:
+- Scalable cloud storage
+- Better performance and reliability
+- Automatic backups and versioning
+- Cost-effective for large files
+
+### Cloudinary Setup
+For bundle image uploads, configure Cloudinary by following the guide:
+📋 **[Cloudinary Setup Guide](./CLOUDINARY_SETUP.md)**
 
 ### Rate Limiting
 Configure rate limiting in `lib/rate-limit.ts`:

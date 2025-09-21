@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BuyButton } from "@/components/buy-button"
 
 
 // Mock data - in real app this would come from API/database
@@ -16,48 +17,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
 
-export async function generateStaticParams() {
-  // Optional: generate /bundles/[id] at build time
-  const bundles = await prisma.bundle.findMany({ select: { id: true, slug: true } })
-  // Return both slug and id as possible routes
-  return bundles.flatMap((b) => [
-    { id: b.slug },
-    { id: b.id }
-  ])
-}
+// Removed generateStaticParams to make all bundle pages dynamic
+// This prevents build failures when database is not accessible during build time
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: Promise<{
-    id: string
+    slug: string
   }>
 }
 
 export default async function BundleDetailPage({ params }: PageProps) {
-  const { id } = await params
-  // console.log('Looking for bundle with slug:', id)
+  const { slug } = await params
+  // console.log('Looking for bundle with slug:', slug)
   
-  // Let's also check what bundles exist in the database
-  const allBundles = await prisma.bundle.findMany({ select: { id: true, slug: true, name: true } })
-  // console.log('All bundles in database:', allBundles)
-  
-  // Try to find by slug first, then by ID if not found
-  let bundle = await prisma.bundle.findUnique({
-    where: { slug: id },
-    include: {
-      images:   { orderBy: { order: 'asc' } },
-      tags:     { include: { tag: true } },
-      features: { orderBy: { order: 'asc' } },
-      techStack:{ include: { tech: true } },
-      includes: { orderBy: { order: 'asc' } },
-      _count:   { select: { reviews: true } },
-    },
-  })
-  
-  // If not found by slug, try by ID
-  if (!bundle) {
-    bundle = await prisma.bundle.findUnique({
-      where: { id: id },
+  try {
+    // Try to find by slug first, then by ID if not found
+    let bundle = await prisma.bundle.findUnique({
+      where: { slug: slug },
       include: {
         images:   { orderBy: { order: 'asc' } },
         tags:     { include: { tag: true } },
@@ -67,36 +46,48 @@ export default async function BundleDetailPage({ params }: PageProps) {
         _count:   { select: { reviews: true } },
       },
     })
-  }
-  
-  // console.log('bundle', bundle)
-  if (!bundle) notFound()
-
+    
+    // If not found by slug, try by ID (for backward compatibility)
+    if (!bundle) {
+      bundle = await prisma.bundle.findUnique({
+        where: { id: slug },
+        include: {
+          images:   { orderBy: { order: 'asc' } },
+          tags:     { include: { tag: true } },
+          features: { orderBy: { order: 'asc' } },
+          techStack:{ include: { tech: true } },
+          includes: { orderBy: { order: 'asc' } },
+          _count:   { select: { reviews: true } },
+        },
+      })
+    }
+    
+    if (!bundle) notFound()
 
     const mapped = {
-    id: bundle.id,
-    name: bundle.name,
-    price: Number(bundle.price),
-    originalPrice: Number(bundle.originalPrice ?? bundle.price),
-    images: bundle.images.map((i) => i.url),
-    tags: bundle.tags.map((t) => t.tag.name),
-    shortDescription: bundle.shortDescription,
-    description: bundle.description,
-    features: bundle.features.map((f) => f.description),
-    techStack: bundle.techStack.map((t) => t.tech.name),
-    setupTime: bundle.setupTime,
-    demoUrl: bundle.demoUrl ?? '#',
-    includes: bundle.includes.map((i) => i.description),
-    rating: 4.9, // or compute from reviews
-    reviews: bundle._count.reviews,
-    lastUpdated: '2 days ago', // derive from updatedAt if you wish
-    downloads: `${bundle.downloadCount}+`,
-    category: bundle.category,
-    difficulty: bundle.difficulty,
-    estimatedValue: bundle.estimatedValue ?? '₹2,00,000+',
-  }
-  
-  return (
+      id: bundle.id,
+      name: bundle.name,
+      price: Number(bundle.price),
+      originalPrice: Number(bundle.originalPrice ?? bundle.price),
+      images: bundle.images.map((i) => i.url),
+      tags: bundle.tags.map((t) => t.tag.name),
+      shortDescription: bundle.shortDescription,
+      description: bundle.description,
+      features: bundle.features.map((f) => f.description),
+      techStack: bundle.techStack.map((t) => t.tech.name),
+      setupTime: bundle.setupTime,
+      demoUrl: bundle.demoUrl ?? '#',
+      includes: bundle.includes.map((i) => i.description),
+      rating: 4.9, // or compute from reviews
+      reviews: bundle._count.reviews,
+      lastUpdated: '2 days ago', // derive from updatedAt if you wish
+      downloads: `${bundle.downloadCount}+`,
+      category: bundle.category,
+      difficulty: bundle.difficulty,
+      estimatedValue: bundle.estimatedValue ?? '₹2,00,000+',
+    }
+
+    return (
     <div className="min-h-screen">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -354,14 +345,14 @@ export default async function BundleDetailPage({ params }: PageProps) {
                 <div className="bg-muted/50 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 sm:py-4 border-y">
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
                     <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      ${mapped.price}
+                      ₹{mapped.price}
                     </span>
                     <div className="text-center sm:text-right">
                       <div className="text-base sm:text-lg text-muted-foreground line-through">
-                        ${mapped.originalPrice}
+                        ₹{mapped.originalPrice}
                       </div>
                       <div className="text-xs sm:text-sm text-green-600 font-semibold">
-                        Save ${mapped.originalPrice - mapped.price}
+                        Save ₹{mapped.originalPrice - mapped.price}
                       </div>
                     </div>
                   </div>
@@ -385,16 +376,15 @@ export default async function BundleDetailPage({ params }: PageProps) {
 
                 {/* Buttons - responsive layout */}
                 <div className="space-y-3 pt-2">
-                  <Button
-                    size="lg"
+                  <BuyButton
+                    bundleId={mapped.id}
+                    bundleName={mapped.name}
+                    price={mapped.price}
                     className="w-full text-base sm:text-lg h-12 sm:h-14 shadow-lg hover:shadow-xl transition-all group relative overflow-hidden"
-                    asChild
                   >
-                    <Link href="/checkout">
-                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                      <span className="relative">Buy Now - ${mapped.price}</span>
-                    </Link>
-                  </Button>
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                    <span className="relative">Buy Now - ₹{mapped.price}</span>
+                  </BuyButton>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Button
@@ -581,5 +571,9 @@ export default async function BundleDetailPage({ params }: PageProps) {
         </div>
       </div>
     </div>
-  )
+    )
+  } catch (error) {
+    console.error('Database error while fetching bundle:', error)
+    notFound()
+  }
 }

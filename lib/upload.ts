@@ -1,6 +1,5 @@
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
-import { v4 as uuidv4 } from "uuid"
 
 interface UploadOptions {
   maxSize: number
@@ -33,9 +32,11 @@ export async function uploadFile(file: File, options: Partial<UploadOptions> = {
     throw new Error(`File type ${file.type} is not allowed. Allowed types: ${config.allowedTypes.join(", ")}`)
   }
 
-  // Generate unique filename
+  // Generate unique filename using timestamp and random number
   const extension = file.name.split(".").pop()
-  const filename = `${uuidv4()}.${extension}`
+  const timestamp = Date.now()
+  const random = Math.random().toString(36).substring(2, 15)
+  const filename = `${timestamp}-${random}.${extension}`
   const filepath = join(config.destination, filename)
 
   // Ensure directory exists

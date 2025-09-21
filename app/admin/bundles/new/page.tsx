@@ -48,6 +48,7 @@ export default function NewBundlePage() {
   const [features, setFeatures] = useState<string[]>([""])
   const [includes, setIncludes] = useState<string[]>([""])
   const [images, setImages] = useState<File[]>([])
+  const [zipFile, setZipFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [generalError, setGeneralError] = useState<string>("")
@@ -100,6 +101,17 @@ export default function NewBundlePage() {
       // Additional validations
       if (images.length === 0) {
         setErrors((prev) => ({ ...prev, images: "At least one image is required" }))
+        return false
+      }
+
+      if (!zipFile) {
+        setErrors((prev) => ({ ...prev, zipFile: "Bundle ZIP file is required" }))
+        return false
+      }
+
+      // Check if ZIP file is actually a ZIP file
+      if (zipFile && !zipFile.name.toLowerCase().endsWith('.zip')) {
+        setErrors((prev) => ({ ...prev, zipFile: "Only ZIP files are allowed" }))
         return false
       }
 
@@ -194,9 +206,23 @@ export default function NewBundlePage() {
     }
   }
   const removeImage = (index: number) => setImages(images.filter((_, i) => i !== index))
+  const handleZipUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setZipFile(file)
+      // Clear zipFile error
+      if (errors.zipFile) {
+        setErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors.zipFile
+          return newErrors
+        })
+      }
+    }
+  }
 
   /**
-   * Uploads images to Cloudinary, then sends the resulting URLs and form data to the backend.
+   * Uploads images to Cloudinary and ZIP file to S3, then sends the resulting URLs and form data to the backend.
    */
   const handleSubmit = async (status: "draft" | "active") => {
     // Validate form before submission
@@ -220,6 +246,36 @@ export default function NewBundlePage() {
       return; // Stop submission if image upload fails
     }
 
+    // --- S3 ZIP File Upload Logic ---
+    let s3ObjectKey: string | null = null;
+    
+    if (zipFile) {
+      try {
+        // Upload ZIP file via API route
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', zipFile);
+        uploadFormData.append('bundleSlug', formData.slug);
+
+        const uploadResponse = await fetch('/api/upload/bundle', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.error || 'Failed to upload ZIP file');
+        }
+
+        const uploadResult = await uploadResponse.json();
+        s3ObjectKey = uploadResult.objectKey;
+      } catch (error) {
+        console.error("ZIP file upload failed:", error);
+        setGeneralError(`Error uploading ZIP file: ${error instanceof Error ? error.message : String(error)}`);
+        setIsLoading(false);
+        return; // Stop submission if ZIP upload fails
+      }
+    }
+
     // --- Backend API Call ---
     const bundlePayload = {
       ...formData,
@@ -231,6 +287,7 @@ export default function NewBundlePage() {
       features: features.filter((f) => f.trim() !== ""),
       includes: includes.filter((i) => i.trim() !== ""),
       images: uploadedImageUrls, // Use the real URLs from Cloudinary
+      downloadUrl: s3ObjectKey ? `s3://${s3ObjectKey}` : undefined, // Store S3 object key
       isActive: status === 'active',
     };
 
@@ -510,6 +567,36 @@ export default function NewBundlePage() {
                           {index === 0 && <Badge className="absolute bottom-2 left-2">Cover</Badge>}
                         </div>
                       ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* ZIP File Upload Card */}
+              <Card>
+                <CardHeader><CardTitle>Bundle ZIP File *</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <label htmlFor="zip-upload" className={`cursor-pointer border-2 border-dashed rounded-lg p-8 text-center block hover:bg-muted/50 transition-colors ${errors.zipFile ? "border-destructive" : "border-muted-foreground/25"}`}>
+                    <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-lg font-medium">Click to Upload ZIP File</p>
+                    <p className="text-sm text-muted-foreground">Upload the complete bundle source code as a ZIP file</p>
+                    <input type="file" accept=".zip" onChange={handleZipUpload} className="hidden" id="zip-upload" />
+                  </label>
+                  {errors.zipFile && <p className="text-sm text-destructive">{errors.zipFile}</p>}
+                  {zipFile && (
+                    <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-blue-600 font-medium text-sm">ZIP</span>
+                        </div>
+                        <div>
+                          <p className="font-medium truncate max-w-xs">{zipFile.name}</p>
+                          <p className="text-sm text-muted-foreground">{(zipFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                      </div>
+                      <Button variant="destructive" size="sm" onClick={() => setZipFile(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   )}
                 </CardContent>

@@ -2,12 +2,12 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Search, Filter, Star, CheckCircle, TrendingUp, Clock } from "lucide-react"
+import { Search, Star, CheckCircle, TrendingUp, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 import { prisma } from "@/lib/db" // Import your Prisma client
 import { Prisma } from "@prisma/client"
 
@@ -189,7 +189,7 @@ export default async function BundlesPage({
                 <CardHeader className="p-0 relative">
                   <div className="aspect-video relative overflow-hidden">
                     <Image
-                      src={bundle.images[0]?.url || "/placeholder.svg"}
+                      src={bundle.images[0]?.url || "/placeholder.jpg"}
                       alt={bundle.name}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -265,7 +265,7 @@ export default async function BundlesPage({
                 </CardContent>
                 <CardFooter className="p-6 pt-0 space-y-2">
                   <Button asChild className="w-full group-hover:bg-primary/90 transition-colors">
-                    <Link href={`/bundles/${bundle.id}`}>View Details & Buy</Link>
+                    <Link href={`/bundles/${bundle.slug}`}>View Details & Buy</Link>
                   </Button>
                   <div className="text-center">
                     {bundle.originalPrice && (

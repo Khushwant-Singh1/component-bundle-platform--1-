@@ -32,6 +32,7 @@ model User {
   orders            Order[]
   reviews           Review[]
   downloads         Download[]
+  downloadTokens    DownloadToken[]
 
   @@map("users")
 }
@@ -77,6 +78,29 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+// OTP verification for user authentication (login/signup)
+model OTPVerification {
+  id        String      @id @default(cuid())
+  email     String      @db.VarChar(255)
+  otp       String      @db.VarChar(6)
+  type      OTPType     @default(LOGIN)
+  expiresAt DateTime
+  isUsed    Boolean     @default(false)
+  usedAt    DateTime?
+  attempts  Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([email, otp, type])
+  @@map("otp_verifications")
+}
+
+enum OTPType {
+  LOGIN
+  SIGNUP
+  PASSWORD_RESET
+}
+
 enum UserRole {
   ADMIN
   CUSTOMER
@@ -115,6 +139,7 @@ model Bundle {
   orders      OrderItem[]
   reviews     Review[]
   downloads   Download[]
+  downloadTokens DownloadToken[]
 
   @@map("bundles")
 }
@@ -205,29 +230,43 @@ model BundleInclude {
 
 // Order management
 model Order {
-  id            String      @id @default(cuid())
-  userId        String
-  email         String
-  status        OrderStatus @default(PENDING)
-  totalAmount   Decimal     @db.Decimal(10, 2)
-  currency      String      @default("INR")
-  paymentMethod String?
-  paymentId     String?     @unique
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id                String      @id @default(cuid())
+  userId            String?     // Optional for guest orders
+  customerName      String
+  email             String
+  emailVerified     Boolean     @default(false)
+  emailOtp          String?
+  emailOtpExpires   DateTime?
+  status            OrderStatus @default(PENDING)
+  totalAmount       Decimal     @db.Decimal(10, 2)
+  currency          String      @default("INR")
+  paymentMethod     String?
+  paymentId         String?     @unique
+  paymentScreenshot String?     // URL to uploaded payment screenshot
+  adminNotes        String?     // Admin notes for approval/rejection
+  approvedAt        DateTime?   // When admin approved the order
+  approvedBy        String?     // Admin user ID who approved
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   // Relations
-  user  User        @relation(fields: [userId], references: [id])
+  user  User?       @relation(fields: [userId], references: [id])
   items OrderItem[]
+  downloadTokens DownloadToken[]
 
   @@map("orders")
 }
 
 enum OrderStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
+  PENDING           // Initial state
+  EMAIL_VERIFIED    // Email OTP verified
+  PAYMENT_PENDING   // Waiting for payment screenshot
+  PAYMENT_UPLOADED  // Payment screenshot uploaded, waiting for admin approval
+  APPROVED          // Admin approved, bundle sent
+  COMPLETED         // Order fully completed
+  REJECTED          // Admin rejected the payment
+  FAILED            // Technical failure
+  REFUNDED          // Order refunded
 }
 
 model OrderItem {
@@ -279,6 +318,28 @@ model Download {
   bundle Bundle @relation(fields: [bundleId], references: [id])
 
   @@map("downloads")
+}
+
+// Secure download tokens (expire within 24 hours)
+model DownloadToken {
+  id          String   @id @default(cuid())
+  token       String   @unique @db.VarChar(255) // JWT or secure random token
+  userId      String
+  bundleId    String
+  orderId     String   // Link to the order that grants access
+  expiresAt   DateTime // Token expiration (24 hours from creation)
+  isUsed      Boolean  @default(false) // Track if token has been used
+  usedAt      DateTime? // When the token was used
+  ipAddress   String?  // IP that requested the token
+  userAgent   String?  // User agent that requested the token
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  bundle Bundle @relation(fields: [bundleId], references: [id])
+  order  Order  @relation(fields: [orderId], references: [id])
+
+  @@map("download_tokens")
 }
 
 // Analytics

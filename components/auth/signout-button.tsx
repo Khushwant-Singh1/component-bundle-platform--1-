@@ -8,14 +8,17 @@ interface SignOutButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
   size?: "default" | "sm" | "lg" | "icon"
   className?: string
+  onClick?: () => void
 }
 
 export function SignOutButton({ 
   variant = "ghost", 
   size = "sm", 
-  className 
+  className,
+  onClick 
 }: SignOutButtonProps) {
   const handleSignOut = () => {
+    onClick?.() // Call the optional callback first
     signOut({ 
       callbackUrl: "/auth/login",
       redirect: true 
