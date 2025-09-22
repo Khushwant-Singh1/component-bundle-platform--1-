@@ -20,7 +20,7 @@ async function getOrderStats() {
         prisma.order.count(),
         prisma.order.count({ where: { status: "PENDING" } }),
         prisma.order.count({ where: { status: "PAYMENT_UPLOADED" } }),
-        prisma.order.count({ where: { status: "APPROVED" } }),
+        prisma.order.count({ where: { status: { in: ["APPROVED", "COMPLETED"] } } }),
         prisma.order.count({ where: { status: "REJECTED" } }),
       ])
 
@@ -176,7 +176,7 @@ export default async function AdminOrdersPage() {
             Needs Review ({stats.paymentUploadedOrders})
           </TabsTrigger>
           <TabsTrigger value="PENDING">Pending</TabsTrigger>
-          <TabsTrigger value="APPROVED">Approved</TabsTrigger>
+          <TabsTrigger value="APPROVED">Approved ({stats.approvedOrders})</TabsTrigger>
           <TabsTrigger value="REJECTED">Rejected</TabsTrigger>
         </TabsList>
         

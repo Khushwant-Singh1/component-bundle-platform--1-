@@ -22,7 +22,12 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {}
     if (status && status !== "all") {
-      where.status = status
+      if (status === "APPROVED") {
+        // Include both APPROVED and COMPLETED orders for the "Approved" tab
+        where.status = { in: ["APPROVED", "COMPLETED"] }
+      } else {
+        where.status = status
+      }
     }
 
     try {
