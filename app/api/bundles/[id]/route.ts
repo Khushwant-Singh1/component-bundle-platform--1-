@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { prisma, withRetry } from "@/lib/db"
-import { updateBundleSchema } from "@/lib/validation"
-import { requireAdmin } from "@/lib/auth"
-import { handleError, NotFoundError, ValidationError } from "@/lib/errors"
-import { rateLimit, generalRateLimit } from "@/lib/rate-limit"
-import { trackPageView } from "@/lib/analytics"
+import { type NextRequest, NextResponse } from "next/server";
+import { prisma, withRetry } from "@/lib/db";
+import { updateBundleSchema } from "@/lib/validation";
+import { requireAdmin } from "@/lib/auth";
+import { handleError, NotFoundError, ValidationError } from "@/lib/errors";
+import { rateLimit, generalRateLimit } from "@/lib/rate-limit";
+import { trackPageView } from "@/lib/analytics";
 
 /**
  * GET /api/bundles/[id]
@@ -16,22 +16,28 @@ import { trackPageView } from "@/lib/analytics"
  *   data: Bundle
  * }
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // Rate limiting
-    const rateLimitResult = rateLimit(request, generalRateLimit)
+    const rateLimitResult = rateLimit(request, generalRateLimit);
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { success: false, error: { message: "Rate limit exceeded", statusCode: 429 } },
-        { status: 429 },
-      )
+        {
+          success: false,
+          error: { message: "Rate limit exceeded", statusCode: 429 },
+        },
+        { status: 429 }
+      );
     }
 
     // Await params
-    const { id } = await params
+    const { id } = await params;
 
     // Track page view
-    await trackPageView(request, `/api/bundles/${id}`, id)
+    await trackPageView(request, `/api/bundles/${id}`, id);
 
     // Find bundle with retry logic
     const bundle = await withRetry(async () => {
@@ -43,6 +49,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           techStack: { include: { tech: true } },
           features: { orderBy: { order: "asc" } },
           includes: { orderBy: { order: "asc" } },
+          perfects: { orderBy: { order: "asc" } },
+          benefits: { orderBy: { order: "asc" } },
+          setup: { orderBy: { id: "asc" } },
           reviews: {
             where: { isPublic: true },
             include: { user: { select: { name: true } } },
@@ -57,18 +66,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             },
           },
         },
-      })
-    })
+      });
+    });
 
     if (!bundle) {
-      throw new NotFoundError("Bundle not found")
+      throw new NotFoundError("Bundle not found");
     }
 
     // Update view count
     await prisma.bundle.update({
       where: { id },
       data: { viewCount: { increment: 1 } },
-    })
+    });
 
     // Format response
     const formattedBundle = {
@@ -78,19 +87,25 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       techStack: bundle.techStack.map((t) => t.tech.name),
       features: bundle.features.map((f) => f.description),
       includes: bundle.includes.map((i) => i.description),
+      perfects: bundle.perfects.map((p) => p.description),
+      benefits: bundle.benefits.map((b) => b.description),
+      setup: bundle.setup.map((s) => ({
+        title: s.title,
+        description: s.description,
+      })),
       stats: {
         reviewCount: bundle._count.reviews,
         salesCount: bundle._count.orders,
         downloadCount: bundle._count.downloads,
       },
-    }
+    };
 
     return NextResponse.json({
       success: true,
       data: formattedBundle,
-    })
+    });
   } catch (error) {
-    return handleError(error)
+    return handleError(error);
   }
 }
 
@@ -106,58 +121,64 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  *   data: Bundle
  * }
  */
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // Rate limiting
-    const rateLimitResult = rateLimit(request, generalRateLimit)
+    const rateLimitResult = rateLimit(request, generalRateLimit);
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { success: false, error: { message: "Rate limit exceeded", statusCode: 429 } },
-        { status: 429 },
-      )
+        {
+          success: false,
+          error: { message: "Rate limit exceeded", statusCode: 429 },
+        },
+        { status: 429 }
+      );
     }
 
     // Authentication and authorization
-    const user = await requireAdmin()
+    const user = await requireAdmin();
 
     // Await params
-    const { id } = await params
+    const { id } = await params;
 
     // Parse and validate request body
-    const body = await request.json()
-    
-    let validatedData
+    const body = await request.json();
+
+    let validatedData;
     try {
-      validatedData = updateBundleSchema.parse(body)
+      validatedData = updateBundleSchema.parse(body);
     } catch (error) {
-      if (error instanceof Error && 'errors' in error) {
-        const zodErrors = (error as any).errors
+      if (error instanceof Error && "errors" in error) {
+        const zodErrors = (error as any).errors;
         const formattedErrors = zodErrors.map((err: any) => ({
-          field: err.path.join('.'),
-          message: err.message
-        }))
+          field: err.path.join("."),
+          message: err.message,
+        }));
         return NextResponse.json(
-          { 
-            success: false, 
-            error: { 
-              message: "Validation failed", 
+          {
+            success: false,
+            error: {
+              message: "Validation failed",
               statusCode: 400,
-              details: formattedErrors
-            } 
+              details: formattedErrors,
+            },
           },
           { status: 400 }
-        )
+        );
       }
-      throw new ValidationError("Invalid request data")
+      throw new ValidationError("Invalid request data");
     }
 
     // Check if bundle exists
     const existingBundle = await prisma.bundle.findUnique({
       where: { id },
-    })
+    });
 
     if (!existingBundle) {
-      throw new NotFoundError("Bundle not found")
+      throw new NotFoundError("Bundle not found");
     }
 
     // Check if slug is being changed and if it conflicts
@@ -167,10 +188,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           slug: validatedData.slug,
           id: { not: id },
         },
-      })
+      });
 
       if (slugConflict) {
-        throw new ValidationError("Bundle with this slug already exists")
+        throw new ValidationError("Bundle with this slug already exists");
       }
     }
 
@@ -196,96 +217,172 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         isFeatured: validatedData.isFeatured,
         isBestseller: validatedData.isBestseller,
       },
-    })
+    });
 
     // Handle images separately (if provided)
     if (validatedData.images !== undefined) {
-      await prisma.$transaction(async (tx) => {
-        await tx.bundleImage.deleteMany({ where: { bundleId: id } })
-        if (validatedData.images!.length > 0) {
-          await tx.bundleImage.createMany({
-            data: validatedData.images!.map((url, index) => ({
-              bundleId: id,
-              url,
-              order: index,
-            })),
-          })
-        }
-      }, { timeout: 10000 })
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bundleImage.deleteMany({ where: { bundleId: id } });
+          if (validatedData.images!.length > 0) {
+            await tx.bundleImage.createMany({
+              data: validatedData.images!.map((url, index) => ({
+                bundleId: id,
+                url,
+                order: index,
+              })),
+            });
+          }
+        },
+        { timeout: 10000 }
+      );
     }
 
     // Handle tags separately (if provided)
     if (validatedData.tags !== undefined) {
-      await prisma.$transaction(async (tx) => {
-        await tx.bundleTag.deleteMany({ where: { bundleId: id } })
-        if (validatedData.tags!.length > 0) {
-          // Create tags in batch
-          await tx.tag.createMany({
-            data: validatedData.tags!.map(name => ({ name })),
-            skipDuplicates: true,
-          })
-          // Get tag IDs and create relationships
-          const tags = await tx.tag.findMany({
-            where: { name: { in: validatedData.tags! } },
-          })
-          await tx.bundleTag.createMany({
-            data: tags.map(tag => ({ bundleId: id, tagId: tag.id })),
-          })
-        }
-      }, { timeout: 10000 })
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bundleTag.deleteMany({ where: { bundleId: id } });
+          if (validatedData.tags!.length > 0) {
+            // Create tags in batch
+            await tx.tag.createMany({
+              data: validatedData.tags!.map((name) => ({ name })),
+              skipDuplicates: true,
+            });
+            // Get tag IDs and create relationships
+            const tags = await tx.tag.findMany({
+              where: { name: { in: validatedData.tags! } },
+            });
+            await tx.bundleTag.createMany({
+              data: tags.map((tag) => ({ bundleId: id, tagId: tag.id })),
+            });
+          }
+        },
+        { timeout: 10000 }
+      );
     }
 
     // Handle tech stack separately (if provided)
     if (validatedData.techStack !== undefined) {
-      await prisma.$transaction(async (tx) => {
-        await tx.bundleTech.deleteMany({ where: { bundleId: id } })
-        if (validatedData.techStack!.length > 0) {
-          // Create technologies in batch
-          await tx.technology.createMany({
-            data: validatedData.techStack!.map(name => ({ name, category: "tool" })),
-            skipDuplicates: true,
-          })
-          // Get tech IDs and create relationships
-          const technologies = await tx.technology.findMany({
-            where: { name: { in: validatedData.techStack! } },
-          })
-          await tx.bundleTech.createMany({
-            data: technologies.map(tech => ({ bundleId: id, techId: tech.id })),
-          })
-        }
-      }, { timeout: 10000 })
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bundleTech.deleteMany({ where: { bundleId: id } });
+          if (validatedData.techStack!.length > 0) {
+            // Create technologies in batch
+            await tx.technology.createMany({
+              data: validatedData.techStack!.map((name) => ({
+                name,
+                category: "tool",
+              })),
+              skipDuplicates: true,
+            });
+            // Get tech IDs and create relationships
+            const technologies = await tx.technology.findMany({
+              where: { name: { in: validatedData.techStack! } },
+            });
+            await tx.bundleTech.createMany({
+              data: technologies.map((tech) => ({
+                bundleId: id,
+                techId: tech.id,
+              })),
+            });
+          }
+        },
+        { timeout: 10000 }
+      );
     }
 
     // Handle features separately (if provided)
     if (validatedData.features !== undefined) {
-      await prisma.$transaction(async (tx) => {
-        await tx.bundleFeature.deleteMany({ where: { bundleId: id } })
-        if (validatedData.features!.length > 0) {
-          await tx.bundleFeature.createMany({
-            data: validatedData.features!.map((description, index) => ({
-              bundleId: id,
-              description,
-              order: index,
-            })),
-          })
-        }
-      }, { timeout: 10000 })
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bundleFeature.deleteMany({ where: { bundleId: id } });
+          if (validatedData.features!.length > 0) {
+            await tx.bundleFeature.createMany({
+              data: validatedData.features!.map((description, index) => ({
+                bundleId: id,
+                description,
+                order: index,
+              })),
+            });
+          }
+        },
+        { timeout: 10000 }
+      );
     }
 
     // Handle includes separately (if provided)
     if (validatedData.includes !== undefined) {
-      await prisma.$transaction(async (tx) => {
-        await tx.bundleInclude.deleteMany({ where: { bundleId: id } })
-        if (validatedData.includes!.length > 0) {
-          await tx.bundleInclude.createMany({
-            data: validatedData.includes!.map((description, index) => ({
-              bundleId: id,
-              description,
-              order: index,
-            })),
-          })
-        }
-      }, { timeout: 10000 })
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bundleInclude.deleteMany({ where: { bundleId: id } });
+          if (validatedData.includes!.length > 0) {
+            await tx.bundleInclude.createMany({
+              data: validatedData.includes!.map((description, index) => ({
+                bundleId: id,
+                description,
+                order: index,
+              })),
+            });
+          }
+        },
+        { timeout: 10000 }
+      );
+    }
+    // Handle perfects separately (if provided)
+    if (validatedData.perfects !== undefined) {
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bundlePerfect.deleteMany({ where: { bundleId: id } });
+          if (validatedData.perfects!.length > 0) {
+            await tx.bundlePerfect.createMany({
+              data: validatedData.perfects!.map((description, index) => ({
+                bundleId: id,
+                description,
+                order: index,
+              })),
+            });
+          }
+        },
+        { timeout: 10000 }
+      );
+    }
+    // Handle benefits separately (if provided)
+    if (validatedData.benefits !== undefined) {
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bundleBenefit.deleteMany({ where: { bundleId: id } });
+          if (validatedData.benefits!.length > 0) {
+            await tx.bundleBenefit.createMany({
+              data: validatedData.benefits!.map((description, index) => ({
+                bundleId: id,
+                description,
+                order: index,
+              })),
+            });
+          }
+        },
+        { timeout: 10000 }
+      );
+    }
+    // Handle setup separately (if provided)
+    if (validatedData.setup !== undefined) {
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bundleSetup.deleteMany({ where: { bundleId: id } });
+          if (validatedData.setup!.length > 0) {
+            await tx.bundleSetup.createMany({
+              data: validatedData.setup!.map((item, index) => ({
+                bundleId: id,
+                title: item.title,
+                description: item.description,
+                order: index,
+              })),
+            });
+          }
+        },
+        { timeout: 10000 }
+      );
     }
 
     // Fetch the complete updated bundle data
@@ -297,6 +394,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         techStack: { include: { tech: true } },
         features: { orderBy: { order: "asc" } },
         includes: { orderBy: { order: "asc" } },
+        perfects: { orderBy: { order: "asc" } },
+        benefits: { orderBy: { order: "asc" } },
+        setup: { orderBy: { id: "asc" } },
         _count: {
           select: {
             reviews: true,
@@ -305,7 +405,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           },
         },
       },
-    })
+    });
 
     // Format response
     const formattedBundle = {
@@ -315,19 +415,26 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       techStack: completeBundle?.techStack.map((t) => t.tech.name) || [],
       features: completeBundle?.features.map((f) => f.description) || [],
       includes: completeBundle?.includes.map((i) => i.description) || [],
+      perfects: completeBundle?.perfects.map((p) => p.description) || [],
+      benefits: completeBundle?.benefits.map((b) => b.description) || [],
+      setup:
+        completeBundle?.setup.map((s) => ({
+          title: s.title,
+          description: s.description,
+        })) || [],
       stats: {
         reviewCount: completeBundle?._count.reviews || 0,
         salesCount: completeBundle?._count.orders || 0,
         downloadCount: completeBundle?._count.downloads || 0,
       },
-    }
+    };
 
     return NextResponse.json({
       success: true,
       data: formattedBundle,
-    })
+    });
   } catch (error) {
-    return handleError(error)
+    return handleError(error);
   }
 }
 
@@ -341,30 +448,36 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
  *   message: string
  * }
  */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // Rate limiting
-    const rateLimitResult = rateLimit(request, generalRateLimit)
+    const rateLimitResult = rateLimit(request, generalRateLimit);
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { success: false, error: { message: "Rate limit exceeded", statusCode: 429 } },
-        { status: 429 },
-      )
+        {
+          success: false,
+          error: { message: "Rate limit exceeded", statusCode: 429 },
+        },
+        { status: 429 }
+      );
     }
 
     // Authentication and authorization
-    const user = await requireAdmin()
+    const user = await requireAdmin();
 
     // Await params
-    const { id } = await params
+    const { id } = await params;
 
     // Check if bundle exists
     const existingBundle = await prisma.bundle.findUnique({
       where: { id },
-    })
+    });
 
     if (!existingBundle) {
-      throw new NotFoundError("Bundle not found")
+      throw new NotFoundError("Bundle not found");
     }
 
     // Delete related records first to avoid foreign key constraints
@@ -372,49 +485,61 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       // Delete order items that reference this bundle
       await tx.orderItem.deleteMany({
         where: { bundleId: id },
-      })
+      });
 
       // Delete bundle tags
       await tx.bundleTag.deleteMany({
         where: { bundleId: id },
-      })
+      });
 
       // Delete bundle tech stack
       await tx.bundleTech.deleteMany({
         where: { bundleId: id },
-      })
+      });
 
       // Delete bundle features
       await tx.bundleFeature.deleteMany({
         where: { bundleId: id },
-      })
+      });
 
       // Delete bundle includes
       await tx.bundleInclude.deleteMany({
         where: { bundleId: id },
-      })
+      });
+      // Delete bundle perfects
+      await tx.bundlePerfect.deleteMany({
+        where: { bundleId: id },
+      });
+      // Delete bundle benefits
+      await tx.bundleBenefit.deleteMany({
+        where: { bundleId: id },
+      });
+      // Delete bundle setup
+      await tx.bundleSetup.deleteMany({
+        where: { bundleId: id },
+      });
 
       // Delete bundle images
       await tx.bundleImage.deleteMany({
         where: { bundleId: id },
-      })
+      });
 
       // Delete reviews
       await tx.review.deleteMany({
         where: { bundleId: id },
-      })
+      });
 
       // Finally delete the bundle
       await tx.bundle.delete({
         where: { id },
-      })
-    })
+      });
+    });
 
     return NextResponse.json({
       success: true,
       message: "Bundle deleted successfully",
-    })
+    });
   } catch (error) {
-    return handleError(error)
+    return handleError(error);
   }
 }

@@ -1,27 +1,89 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { ArrowLeft, Upload, X, Plus, Save, Eye, Loader2, AlertCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { bundleFormSchema } from "@/lib/validations/bundle"
-import { uploadMultipleToCloudinary } from "@/lib/cloudinary"
-import { z } from "zod"
+import { useState } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Plus,
+  Save,
+  Eye,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { bundleFormSchema } from "@/lib/validations/bundle";
+import { uploadMultipleToCloudinary } from "@/lib/cloudinary";
+import { z } from "zod";
 
 // Mock data for available tags and technologies, assuming components are available
-const availableTags = [ "Next.js", "React", "TypeScript", "JavaScript", "Tailwind CSS", "CSS", "HTML", "Node.js", "Express", "MongoDB", "PostgreSQL", "MySQL", "Prisma", "Auth", "Dashboard", "E-commerce", "Blog", "Landing Page", "SaaS", "API", "Full-Stack", "Frontend", "Backend", "Mobile", "Responsive", "Dark Mode", "Charts", "Analytics" ]
-const availableTech = [ "Next.js 14", "React 18", "TypeScript", "Tailwind CSS", "Framer Motion", "Prisma", "NextAuth.js", "Stripe", "Recharts", "Radix UI", "shadcn/ui", "Node.js", "Express", "MongoDB", "PostgreSQL", "Redis", "WebSocket" ]
+const availableTags = [
+  "Next.js",
+  "React",
+  "TypeScript",
+  "JavaScript",
+  "Tailwind CSS",
+  "CSS",
+  "HTML",
+  "Node.js",
+  "Express",
+  "MongoDB",
+  "PostgreSQL",
+  "MySQL",
+  "Prisma",
+  "Auth",
+  "Dashboard",
+  "E-commerce",
+  "Blog",
+  "Landing Page",
+  "SaaS",
+  "API",
+  "Full-Stack",
+  "Frontend",
+  "Backend",
+  "Mobile",
+  "Responsive",
+  "Dark Mode",
+  "Charts",
+  "Analytics",
+];
+const availableTech = [
+  "Next.js 14",
+  "React 18",
+  "TypeScript",
+  "Tailwind CSS",
+  "Framer Motion",
+  "Prisma",
+  "NextAuth.js",
+  "Stripe",
+  "Recharts",
+  "Radix UI",
+  "shadcn/ui",
+  "Node.js",
+  "Express",
+  "MongoDB",
+  "PostgreSQL",
+  "Redis",
+  "WebSocket",
+];
 
 export default function NewBundlePage() {
   // --- STATE MANAGEMENT ---
@@ -41,50 +103,56 @@ export default function NewBundlePage() {
     isActive: true,
     isFeatured: false,
     isBestseller: false,
-  })
+  });
 
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [selectedTech, setSelectedTech] = useState<string[]>([])
-  const [features, setFeatures] = useState<string[]>([""])
-  const [includes, setIncludes] = useState<string[]>([""])
-  const [images, setImages] = useState<File[]>([])
-  const [zipFile, setZipFile] = useState<File | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [generalError, setGeneralError] = useState<string>("")
-  const [successMessage, setSuccessMessage] = useState<string>("")
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTech, setSelectedTech] = useState<string[]>([]);
+  const [features, setFeatures] = useState<string[]>([""]);
+  const [includes, setIncludes] = useState<string[]>([""]);
+  const [perfects, setPerfects] = useState<string[]>([""]);
+  const [benefits, setBenefits] = useState<string[]>([""]);
+  const [setup, setSetup] = useState<{ title: string; description: string }[]>([{ title: "", description: "" }]);
+  const [images, setImages] = useState<File[]>([]);
+  const [zipFile, setZipFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
   // --- HANDLER FUNCTIONS ---
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
-    
+
     if (field === "name" && typeof value === "string") {
-      const slug = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
-      setFormData((prev) => ({ ...prev, slug }))
+      const slug = value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      setFormData((prev) => ({ ...prev, slug }));
       // Clear slug error too
       if (errors.slug) {
         setErrors((prev) => {
-          const newErrors = { ...prev }
-          delete newErrors.slug
-          return newErrors
-        })
+          const newErrors = { ...prev };
+          delete newErrors.slug;
+          return newErrors;
+        });
       }
     }
-  }
+  };
 
   // Validation function
   const validateForm = (): boolean => {
-    setErrors({})
-    setGeneralError("")
+    setErrors({});
+    setGeneralError("");
 
     // Prepare data for validation
     const formDataToValidate = {
@@ -93,133 +161,206 @@ export default function NewBundlePage() {
       techStack: selectedTech,
       features: features.filter((f) => f.trim() !== ""),
       includes: includes.filter((i) => i.trim() !== ""),
-    }
+      setup: setup.filter((s) => s.title.trim() !== "" && s.description.trim() !== ""),
+    };
 
     try {
-      bundleFormSchema.parse(formDataToValidate)
-      
+      bundleFormSchema.parse(formDataToValidate);
+
       // Additional validations
       if (images.length === 0) {
-        setErrors((prev) => ({ ...prev, images: "At least one image is required" }))
-        return false
+        setErrors((prev) => ({
+          ...prev,
+          images: "At least one image is required",
+        }));
+        return false;
       }
 
       if (!zipFile) {
-        setErrors((prev) => ({ ...prev, zipFile: "Bundle ZIP file is required" }))
-        return false
+        setErrors((prev) => ({
+          ...prev,
+          zipFile: "Bundle ZIP file is required",
+        }));
+        return false;
       }
 
       // Check if ZIP file is actually a ZIP file
-      if (zipFile && !zipFile.name.toLowerCase().endsWith('.zip')) {
-        setErrors((prev) => ({ ...prev, zipFile: "Only ZIP files are allowed" }))
-        return false
+      if (zipFile && !zipFile.name.toLowerCase().endsWith(".zip")) {
+        setErrors((prev) => ({
+          ...prev,
+          zipFile: "Only ZIP files are allowed",
+        }));
+        return false;
       }
 
-      if (formData.originalPrice && formData.price && Number(formData.originalPrice) <= Number(formData.price)) {
-        setErrors((prev) => ({ ...prev, originalPrice: "Original price must be higher than current price" }))
-        return false
+      if (
+        formData.originalPrice &&
+        formData.price &&
+        Number(formData.originalPrice) <= Number(formData.price)
+      ) {
+        setErrors((prev) => ({
+          ...prev,
+          originalPrice: "Original price must be higher than current price",
+        }));
+        return false;
       }
 
-      return true
+      return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldErrors: Record<string, string> = {}
+        const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err) => {
-          const path = err.path.join(".")
-          fieldErrors[path] = err.message
-        })
-        setErrors(fieldErrors)
+          const path = err.path.join(".");
+          fieldErrors[path] = err.message;
+        });
+        setErrors(fieldErrors);
       }
-      return false
+      return false;
     }
-  }
+  };
 
-  const addTag = (tag: string) => { 
+  const addTag = (tag: string) => {
     if (!selectedTags.includes(tag)) {
-      setSelectedTags([...selectedTags, tag])
+      setSelectedTags([...selectedTags, tag]);
       // Clear tags error
       if (errors.tags) {
         setErrors((prev) => {
-          const newErrors = { ...prev }
-          delete newErrors.tags
-          return newErrors
-        })
+          const newErrors = { ...prev };
+          delete newErrors.tags;
+          return newErrors;
+        });
       }
     }
-  }
-  const removeTag = (tag: string) => setSelectedTags(selectedTags.filter((t) => t !== tag))
-  const addTech = (tech: string) => { 
+  };
+  const removeTag = (tag: string) =>
+    setSelectedTags(selectedTags.filter((t) => t !== tag));
+  const addTech = (tech: string) => {
     if (!selectedTech.includes(tech)) {
-      setSelectedTech([...selectedTech, tech])
+      setSelectedTech([...selectedTech, tech]);
       // Clear techStack error
       if (errors.techStack) {
         setErrors((prev) => {
-          const newErrors = { ...prev }
-          delete newErrors.techStack
-          return newErrors
-        })
+          const newErrors = { ...prev };
+          delete newErrors.techStack;
+          return newErrors;
+        });
       }
     }
-  }
-  const removeTech = (tech: string) => setSelectedTech(selectedTech.filter((t) => t !== tech))
-  const addFeature = () => setFeatures([...features, ""])
-  const updateFeature = (index: number, value: string) => { 
-    const newFeatures = [...features]; 
-    newFeatures[index] = value; 
-    setFeatures(newFeatures)
+  };
+  const removeTech = (tech: string) =>
+    setSelectedTech(selectedTech.filter((t) => t !== tech));
+  const addFeature = () => setFeatures([...features, ""]);
+  const updateFeature = (index: number, value: string) => {
+    const newFeatures = [...features];
+    newFeatures[index] = value;
+    setFeatures(newFeatures);
     // Clear features error
     if (errors.features) {
       setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors.features
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors.features;
+        return newErrors;
+      });
     }
-  }
-  const removeFeature = (index: number) => setFeatures(features.filter((_, i) => i !== index))
-  const addInclude = () => setIncludes([...includes, ""])
-  const updateInclude = (index: number, value: string) => { 
-    const newIncludes = [...includes]; 
-    newIncludes[index] = value; 
-    setIncludes(newIncludes)
+  };
+  const removeFeature = (index: number) =>
+    setFeatures(features.filter((_, i) => i !== index));
+  const addInclude = () => setIncludes([...includes, ""]);
+  const updateInclude = (index: number, value: string) => {
+    const newIncludes = [...includes];
+    newIncludes[index] = value;
+    setIncludes(newIncludes);
     // Clear includes error
     if (errors.includes) {
       setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors.includes
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors.includes;
+        return newErrors;
+      });
     }
-  }
-  const removeInclude = (index: number) => setIncludes(includes.filter((_, i) => i !== index))
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => { 
+  };
+  const removeInclude = (index: number) =>
+    setIncludes(includes.filter((_, i) => i !== index));
+  const addPerfect = () => setPerfects([...perfects, ""]);
+  const updatePerfect = (index: number, value: string) => {
+    const newPerfects = [...perfects];
+    newPerfects[index] = value;
+    setPerfects(newPerfects);
+    // Clear perfects error
+    if (errors.perfects) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.perfects;
+        return newErrors;
+      });
+    }
+  };
+  const removePerfect = (index: number) =>
+    setPerfects(perfects.filter((_, i) => i !== index));
+  const addBenefit = () => setBenefits([...benefits, ""]);
+  const updateBenefit = (index: number, value: string) => {
+    const newBenefits = [...benefits];
+    newBenefits[index] = value;
+    setBenefits(newBenefits);
+    // Clear benefits error
+    if (errors.benefits) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.benefits;
+        return newErrors;
+      });
+    }
+  };
+  const removeBenefit = (index: number) =>
+    setBenefits(benefits.filter((_, i) => i !== index));
+
+  // Setup handlers
+  const addSetup = () => setSetup([...setup, { title: "", description: "" }]);
+  const updateSetup = (index: number, field: 'title' | 'description', value: string) => {
+    const newSetup = [...setup];
+    newSetup[index][field] = value;
+    setSetup(newSetup);
+    // Clear setup error
+    if (errors.setup) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.setup;
+        return newErrors;
+      });
+    }
+  };
+  const removeSetup = (index: number) =>
+    setSetup(setup.filter((_, i) => i !== index));
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setImages([...images, ...Array.from(e.target.files)])
+      setImages([...images, ...Array.from(e.target.files)]);
       // Clear images error
       if (errors.images) {
         setErrors((prev) => {
-          const newErrors = { ...prev }
-          delete newErrors.images
-          return newErrors
-        })
+          const newErrors = { ...prev };
+          delete newErrors.images;
+          return newErrors;
+        });
       }
     }
-  }
-  const removeImage = (index: number) => setImages(images.filter((_, i) => i !== index))
+  };
+  const removeImage = (index: number) =>
+    setImages(images.filter((_, i) => i !== index));
   const handleZipUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setZipFile(file)
+      const file = e.target.files[0];
+      setZipFile(file);
       // Clear zipFile error
       if (errors.zipFile) {
         setErrors((prev) => {
-          const newErrors = { ...prev }
-          delete newErrors.zipFile
-          return newErrors
-        })
+          const newErrors = { ...prev };
+          delete newErrors.zipFile;
+          return newErrors;
+        });
       }
     }
-  }
+  };
 
   /**
    * Uploads images to Cloudinary and ZIP file to S3, then sends the resulting URLs and form data to the backend.
@@ -227,50 +368,58 @@ export default function NewBundlePage() {
   const handleSubmit = async (status: "draft" | "active") => {
     // Validate form before submission
     if (!validateForm()) {
-      setGeneralError("Please fix the errors above before submitting.")
-      return
+      setGeneralError("Please fix the errors above before submitting.");
+      return;
     }
 
-    setIsLoading(true)
-    setGeneralError("")
+    setIsLoading(true);
+    setGeneralError("");
 
     // --- Cloudinary Upload Logic ---
     let uploadedImageUrls: string[] = [];
-    
+
     try {
       uploadedImageUrls = await uploadMultipleToCloudinary(images);
     } catch (error) {
       console.error("Image upload failed:", error);
-      setGeneralError(`Error uploading images: ${error instanceof Error ? error.message : String(error)}`);
+      setGeneralError(
+        `Error uploading images: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
       setIsLoading(false);
       return; // Stop submission if image upload fails
     }
 
     // --- S3 ZIP File Upload Logic ---
     let s3ObjectKey: string | null = null;
-    
+
     if (zipFile) {
       try {
         // Upload ZIP file via API route
         const uploadFormData = new FormData();
-        uploadFormData.append('file', zipFile);
-        uploadFormData.append('bundleSlug', formData.slug);
+        uploadFormData.append("file", zipFile);
+        uploadFormData.append("bundleSlug", formData.slug);
 
-        const uploadResponse = await fetch('/api/upload/bundle', {
-          method: 'POST',
+        const uploadResponse = await fetch("/api/upload/bundle", {
+          method: "POST",
           body: uploadFormData,
         });
 
         if (!uploadResponse.ok) {
           const errorData = await uploadResponse.json();
-          throw new Error(errorData.error || 'Failed to upload ZIP file');
+          throw new Error(errorData.error || "Failed to upload ZIP file");
         }
 
         const uploadResult = await uploadResponse.json();
         s3ObjectKey = uploadResult.objectKey;
       } catch (error) {
         console.error("ZIP file upload failed:", error);
-        setGeneralError(`Error uploading ZIP file: ${error instanceof Error ? error.message : String(error)}`);
+        setGeneralError(
+          `Error uploading ZIP file: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
         setIsLoading(false);
         return; // Stop submission if ZIP upload fails
       }
@@ -280,48 +429,58 @@ export default function NewBundlePage() {
     const bundlePayload = {
       ...formData,
       price: parseFloat(formData.price) || 0,
-      originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-      difficulty: formData.difficulty ? formData.difficulty.toUpperCase() : "BEGINNER",
+      originalPrice: formData.originalPrice
+        ? parseFloat(formData.originalPrice)
+        : undefined,
+      difficulty: formData.difficulty
+        ? formData.difficulty.toUpperCase()
+        : "BEGINNER",
       tags: selectedTags,
       techStack: selectedTech,
       features: features.filter((f) => f.trim() !== ""),
       includes: includes.filter((i) => i.trim() !== ""),
+      setup: setup.filter((s) => s.title.trim() !== "" && s.description.trim() !== ""),
+      perfects: perfects.filter((p) => p.trim() !== ""),
+      benefits: benefits.filter((b) => b.trim() !== ""),
       images: uploadedImageUrls, // Use the real URLs from Cloudinary
       downloadUrl: s3ObjectKey ? `s3://${s3ObjectKey}` : undefined, // Store S3 object key
-      isActive: status === 'active',
+      isActive: status === "active",
     };
 
     try {
-      const response = await fetch('/api/bundles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/bundles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bundlePayload),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error.message || 'Failed to create the bundle.');
+        throw new Error(
+          errorData.error.message || "Failed to create the bundle."
+        );
       }
 
       const result = await response.json();
-      console.log('Successfully created bundle:', result.data);
-      
+      console.log("Successfully created bundle:", result.data);
+
       // Show success message and redirect
       setGeneralError("");
       setSuccessMessage("Bundle created successfully! Redirecting...");
-      
+
       // Redirect after a short delay
       setTimeout(() => {
-        window.location.href = '/admin/bundles';
+        window.location.href = "/admin/bundles";
       }, 2000);
-
     } catch (error) {
-      console.error('Submission failed:', error);
-      setGeneralError(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Submission failed:", error);
+      setGeneralError(
+        `Error: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   // --- JSX RENDER ---
   return (
@@ -333,14 +492,14 @@ export default function NewBundlePage() {
           <AlertDescription>{generalError}</AlertDescription>
         </Alert>
       )}
-      
+
       {successMessage && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{successMessage}</AlertDescription>
         </Alert>
       )}
-      
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" asChild>
@@ -350,17 +509,33 @@ export default function NewBundlePage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Create New Bundle</h1>
-            <p className="text-muted-foreground">Add a new component bundle to your marketplace</p>
+            <h1 className="text-2xl md:text-3xl font-bold">
+              Create New Bundle
+            </h1>
+            <p className="text-muted-foreground">
+              Add a new component bundle to your marketplace
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => handleSubmit("draft")} disabled={isLoading}>
-            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          <Button
+            variant="outline"
+            onClick={() => handleSubmit("draft")}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
             Save Draft
           </Button>
           <Button onClick={() => handleSubmit("active")} disabled={isLoading}>
-            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Eye className="h-4 w-4 mr-2" />
+            )}
             Publish Bundle
           </Button>
         </div>
@@ -380,114 +555,211 @@ export default function NewBundlePage() {
             {/* Basic Info Tab */}
             <TabsContent value="basic" className="space-y-6 pt-6">
               <Card>
-                <CardHeader><CardTitle>Basic Information</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Basic Information</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Bundle Name *</Label>
-                      <Input 
-                        id="name" 
-                        value={formData.name} 
-                        onChange={(e) => handleInputChange("name", e.target.value)} 
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) =>
+                          handleInputChange("name", e.target.value)
+                        }
                         placeholder="Dashboard Pro"
                         className={errors.name ? "border-destructive" : ""}
                       />
-                      {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+                      {errors.name && (
+                        <p className="text-sm text-destructive">
+                          {errors.name}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="slug">URL Slug *</Label>
-                      <Input 
-                        id="slug" 
-                        value={formData.slug} 
-                        onChange={(e) => handleInputChange("slug", e.target.value)} 
+                      <Input
+                        id="slug"
+                        value={formData.slug}
+                        onChange={(e) =>
+                          handleInputChange("slug", e.target.value)
+                        }
                         placeholder="dashboard-pro"
                         className={errors.slug ? "border-destructive" : ""}
                       />
-                      {errors.slug && <p className="text-sm text-destructive">{errors.slug}</p>}
+                      {errors.slug && (
+                        <p className="text-sm text-destructive">
+                          {errors.slug}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="shortDescription">Short Description *</Label>
-                    <Input 
-                      id="shortDescription" 
-                      value={formData.shortDescription} 
-                      onChange={(e) => handleInputChange("shortDescription", e.target.value)} 
+                    <Label htmlFor="shortDescription">
+                      Short Description *
+                    </Label>
+                    <Input
+                      id="shortDescription"
+                      value={formData.shortDescription}
+                      onChange={(e) =>
+                        handleInputChange("shortDescription", e.target.value)
+                      }
                       placeholder="Complete admin dashboard solution"
-                      className={errors.shortDescription ? "border-destructive" : ""}
+                      className={
+                        errors.shortDescription ? "border-destructive" : ""
+                      }
                     />
-                    {errors.shortDescription && <p className="text-sm text-destructive">{errors.shortDescription}</p>}
+                    {errors.shortDescription && (
+                      <p className="text-sm text-destructive">
+                        {errors.shortDescription}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Full Description *</Label>
-                    <Textarea 
-                      id="description" 
-                      value={formData.description} 
-                      onChange={(e) => handleInputChange("description", e.target.value)} 
-                      placeholder="Detailed description of your bundle..." 
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        handleInputChange("description", e.target.value)
+                      }
+                      placeholder="Detailed description of your bundle..."
                       rows={6}
                       className={errors.description ? "border-destructive" : ""}
                     />
-                    {errors.description && <p className="text-sm text-destructive">{errors.description}</p>}
+                    {errors.description && (
+                      <p className="text-sm text-destructive">
+                        {errors.description}
+                      </p>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="category">Category *</Label>
-                      <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
-                        <SelectTrigger className={errors.category ? "border-destructive" : ""}>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) =>
+                          handleInputChange("category", value)
+                        }
+                      >
+                        <SelectTrigger
+                          className={
+                            errors.category ? "border-destructive" : ""
+                          }
+                        >
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
-                        <SelectContent><SelectItem value="frontend">Frontend</SelectItem><SelectItem value="fullstack">Full-Stack</SelectItem><SelectItem value="backend">Backend</SelectItem><SelectItem value="mobile">Mobile</SelectItem></SelectContent>
+                        <SelectContent>
+                          <SelectItem value="frontend">Frontend</SelectItem>
+                          <SelectItem value="fullstack">Full-Stack</SelectItem>
+                          <SelectItem value="backend">Backend</SelectItem>
+                          <SelectItem value="mobile">Mobile</SelectItem>
+                        </SelectContent>
                       </Select>
-                      {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
+                      {errors.category && (
+                        <p className="text-sm text-destructive">
+                          {errors.category}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="difficulty">Difficulty *</Label>
-                      <Select value={formData.difficulty} onValueChange={(value) => handleInputChange("difficulty", value)}>
-                        <SelectTrigger className={errors.difficulty ? "border-destructive" : ""}>
+                      <Select
+                        value={formData.difficulty}
+                        onValueChange={(value) =>
+                          handleInputChange("difficulty", value)
+                        }
+                      >
+                        <SelectTrigger
+                          className={
+                            errors.difficulty ? "border-destructive" : ""
+                          }
+                        >
                           <SelectValue placeholder="Select difficulty" />
                         </SelectTrigger>
-                        <SelectContent><SelectItem value="BEGINNER">BEGINNER</SelectItem><SelectItem value="INTERMEDIATE">INTERMEDIATE</SelectItem><SelectItem value="ADVANCED">ADVANCED</SelectItem></SelectContent>
+                        <SelectContent>
+                          <SelectItem value="BEGINNER">BEGINNER</SelectItem>
+                          <SelectItem value="INTERMEDIATE">
+                            INTERMEDIATE
+                          </SelectItem>
+                          <SelectItem value="ADVANCED">ADVANCED</SelectItem>
+                        </SelectContent>
                       </Select>
-                      {errors.difficulty && <p className="text-sm text-destructive">{errors.difficulty}</p>}
+                      {errors.difficulty && (
+                        <p className="text-sm text-destructive">
+                          {errors.difficulty}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="setupTime">Setup Time</Label>
-                      <Input id="setupTime" value={formData.setupTime} onChange={(e) => handleInputChange("setupTime", e.target.value)} placeholder="15 minutes" />
+                      <Input
+                        id="setupTime"
+                        value={formData.setupTime}
+                        onChange={(e) =>
+                          handleInputChange("setupTime", e.target.value)
+                        }
+                        placeholder="15 minutes"
+                      />
                     </div>
                   </div>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Pricing</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="price">Current Price *</Label>
-                      <Input 
-                        id="price" 
-                        type="number" 
-                        value={formData.price} 
-                        onChange={(e) => handleInputChange("price", e.target.value)} 
+                      <Input
+                        id="price"
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) =>
+                          handleInputChange("price", e.target.value)
+                        }
                         placeholder="49"
                         className={errors.price ? "border-destructive" : ""}
                       />
-                      {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
+                      {errors.price && (
+                        <p className="text-sm text-destructive">
+                          {errors.price}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="originalPrice">Original Price</Label>
-                      <Input 
-                        id="originalPrice" 
-                        type="number" 
-                        value={formData.originalPrice} 
-                        onChange={(e) => handleInputChange("originalPrice", e.target.value)} 
+                      <Input
+                        id="originalPrice"
+                        type="number"
+                        value={formData.originalPrice}
+                        onChange={(e) =>
+                          handleInputChange("originalPrice", e.target.value)
+                        }
                         placeholder="79"
-                        className={errors.originalPrice ? "border-destructive" : ""}
+                        className={
+                          errors.originalPrice ? "border-destructive" : ""
+                        }
                       />
-                      {errors.originalPrice && <p className="text-sm text-destructive">{errors.originalPrice}</p>}
+                      {errors.originalPrice && (
+                        <p className="text-sm text-destructive">
+                          {errors.originalPrice}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="estimatedValue">Estimated Value</Label>
-                      <Input id="estimatedValue" value={formData.estimatedValue} onChange={(e) => handleInputChange("estimatedValue", e.target.value)} placeholder="₹2,00,000+" />
+                      <Input
+                        id="estimatedValue"
+                        value={formData.estimatedValue}
+                        onChange={(e) =>
+                          handleInputChange("estimatedValue", e.target.value)
+                        }
+                        placeholder="200000"
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -497,49 +769,264 @@ export default function NewBundlePage() {
             {/* Content Tab */}
             <TabsContent value="content" className="space-y-6 pt-6">
               <Card>
-                <CardHeader><CardTitle>Tags *</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Tags *</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    {selectedTags.map((tag) => (<Badge key={tag} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">{tag}<X className="h-3 w-3 cursor-pointer" onClick={() => removeTag(tag)} /></Badge>))}
+                    {selectedTags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="flex items-center gap-1.5 py-1 px-2"
+                      >
+                        {tag}
+                        <X
+                          className="h-3 w-3 cursor-pointer"
+                          onClick={() => removeTag(tag)}
+                        />
+                      </Badge>
+                    ))}
                   </div>
                   <Select onValueChange={addTag}>
-                    <SelectTrigger className={errors.tags ? "border-destructive" : ""}>
+                    <SelectTrigger
+                      className={errors.tags ? "border-destructive" : ""}
+                    >
                       <SelectValue placeholder="Add tags..." />
                     </SelectTrigger>
-                    <SelectContent>{availableTags.filter((tag) => !selectedTags.includes(tag)).map((tag) => (<SelectItem key={tag} value={tag}>{tag}</SelectItem>))}</SelectContent>
+                    <SelectContent>
+                      {availableTags
+                        .filter((tag) => !selectedTags.includes(tag))
+                        .map((tag) => (
+                          <SelectItem key={tag} value={tag}>
+                            {tag}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
                   </Select>
-                  {errors.tags && <p className="text-sm text-destructive">{errors.tags}</p>}
+                  {errors.tags && (
+                    <p className="text-sm text-destructive">{errors.tags}</p>
+                  )}
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle>Technology Stack *</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Technology Stack *</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    {selectedTech.map((tech) => (<Badge key={tech} variant="outline" className="flex items-center gap-1.5 py-1 px-2">{tech}<X className="h-3 w-3 cursor-pointer" onClick={() => removeTech(tech)} /></Badge>))}
+                    {selectedTech.map((tech) => (
+                      <Badge
+                        key={tech}
+                        variant="outline"
+                        className="flex items-center gap-1.5 py-1 px-2"
+                      >
+                        {tech}
+                        <X
+                          className="h-3 w-3 cursor-pointer"
+                          onClick={() => removeTech(tech)}
+                        />
+                      </Badge>
+                    ))}
                   </div>
                   <Select onValueChange={addTech}>
-                    <SelectTrigger className={errors.techStack ? "border-destructive" : ""}>
+                    <SelectTrigger
+                      className={errors.techStack ? "border-destructive" : ""}
+                    >
                       <SelectValue placeholder="Add technologies..." />
                     </SelectTrigger>
-                    <SelectContent>{availableTech.filter((tech) => !selectedTech.includes(tech)).map((tech) => (<SelectItem key={tech} value={tech}>{tech}</SelectItem>))}</SelectContent>
+                    <SelectContent>
+                      {availableTech
+                        .filter((tech) => !selectedTech.includes(tech))
+                        .map((tech) => (
+                          <SelectItem key={tech} value={tech}>
+                            {tech}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
                   </Select>
-                  {errors.techStack && <p className="text-sm text-destructive">{errors.techStack}</p>}
+                  {errors.techStack && (
+                    <p className="text-sm text-destructive">
+                      {errors.techStack}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle>Features *</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Features *</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  {features.map((feature, index) => (<div key={index} className="flex items-center gap-2"><Input value={feature} onChange={(e) => updateFeature(index, e.target.value)} placeholder="e.g., User authentication" className={errors.features ? "border-destructive" : ""} /><Button variant="ghost" size="icon" onClick={() => removeFeature(index)} disabled={features.length === 1}><X className="h-4 w-4" /></Button></div>))}
-                  <Button variant="outline" onClick={addFeature}><Plus className="h-4 w-4 mr-2" />Add Feature</Button>
-                  {errors.features && <p className="text-sm text-destructive">{errors.features}</p>}
+                  {features.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={feature}
+                        onChange={(e) => updateFeature(index, e.target.value)}
+                        placeholder="e.g., User authentication"
+                        className={errors.features ? "border-destructive" : ""}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFeature(index)}
+                        disabled={features.length === 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" onClick={addFeature}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Feature
+                  </Button>
+                  {errors.features && (
+                    <p className="text-sm text-destructive">
+                      {errors.features}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle>What's Included *</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>What's Included *</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  {includes.map((include, index) => (<div key={index} className="flex items-center gap-2"><Input value={include} onChange={(e) => updateInclude(index, e.target.value)} placeholder="e.g., Full source code" className={errors.includes ? "border-destructive" : ""} /><Button variant="ghost" size="icon" onClick={() => removeInclude(index)} disabled={includes.length === 1}><X className="h-4 w-4" /></Button></div>))}
-                  <Button variant="outline" onClick={addInclude}><Plus className="h-4 w-4 mr-2" />Add Item</Button>
-                  {errors.includes && <p className="text-sm text-destructive">{errors.includes}</p>}
+                  {includes.map((include, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={include}
+                        onChange={(e) => updateInclude(index, e.target.value)}
+                        placeholder="e.g., Full source code"
+                        className={errors.includes ? "border-destructive" : ""}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeInclude(index)}
+                        disabled={includes.length === 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" onClick={addInclude}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                  {errors.includes && (
+                    <p className="text-sm text-destructive">
+                      {errors.includes}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Overview (Perfect For) *</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {perfects.map((perfect, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={perfect}
+                        onChange={(e) => updatePerfect(index, e.target.value)}
+                        placeholder="e.g., SaaS applications and startups"
+                        className={errors.perfect ? "border-destructive" : ""}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removePerfect(index)}
+                        disabled={perfects.length === 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" onClick={addPerfect}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                  {errors.perfect && (
+                    <p className="text-sm text-destructive">{errors.perfect}</p>
+                  )}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Overview (Key Benefits) *</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {benefits.map((benefit, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={benefit}
+                        onChange={(e) => updateBenefit(index, e.target.value)}
+                        placeholder="e.g., Save 40+ hours of development"
+                        className={errors.benefits ? "border-destructive" : ""}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeBenefit(index)}
+                        disabled={benefits.length === 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" onClick={addBenefit}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                  {errors.benefits && (
+                    <p className="text-sm text-destructive">
+                      {errors.benefits}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Setup Instructions *</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {setup.map((setupItem, index) => (
+                    <div key={index} className="space-y-2 p-4 border rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={setupItem.title}
+                          onChange={(e) => updateSetup(index, 'title', e.target.value)}
+                          placeholder="e.g., Install Dependencies"
+                          className={errors.setup ? "border-destructive" : ""}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeSetup(index)}
+                          disabled={setup.length === 1}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={setupItem.description}
+                        onChange={(e) => updateSetup(index, 'description', e.target.value)}
+                        placeholder="e.g., Run npm install to install all required dependencies"
+                        className={errors.setup ? "border-destructive" : ""}
+                        rows={3}
+                      />
+                    </div>
+                  ))}
+                  <Button variant="outline" onClick={addSetup}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Setup Step
+                  </Button>
+                  {errors.setup && (
+                    <p className="text-sm text-destructive">
+                      {errors.setup}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -547,24 +1034,67 @@ export default function NewBundlePage() {
             {/* Media Tab */}
             <TabsContent value="media" className="space-y-6 pt-6">
               <Card>
-                <CardHeader><CardTitle>Bundle Images *</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Bundle Images *</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  <label htmlFor="image-upload" className={`cursor-pointer border-2 border-dashed rounded-lg p-8 text-center block hover:bg-muted/50 transition-colors ${errors.images ? "border-destructive" : "border-muted-foreground/25"}`}>
+                  <label
+                    htmlFor="image-upload"
+                    className={`cursor-pointer border-2 border-dashed rounded-lg p-8 text-center block hover:bg-muted/50 transition-colors ${
+                      errors.images
+                        ? "border-destructive"
+                        : "border-muted-foreground/25"
+                    }`}
+                  >
                     <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-lg font-medium">Click to Upload Images</p>
-                    <p className="text-sm text-muted-foreground">First image is the main preview. Drag and drop supported.</p>
-                    <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" id="image-upload" />
+                    <p className="text-lg font-medium">
+                      Click to Upload Images
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      First image is the main preview. Drag and drop supported.
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="image-upload"
+                    />
                   </label>
-                  {errors.images && <p className="text-sm text-destructive">{errors.images}</p>}
+                  {errors.images && (
+                    <p className="text-sm text-destructive">{errors.images}</p>
+                  )}
                   {images.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {images.map((image, index) => (
-                        <div key={index} className="relative group aspect-video">
-                          <img src={URL.createObjectURL(image)} alt={image.name} className="w-full h-full object-cover rounded-lg" onLoad={e => URL.revokeObjectURL(e.currentTarget.src)} />
+                        <div
+                          key={index}
+                          className="relative group aspect-video"
+                        >
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={image.name}
+                            className="w-full h-full object-cover rounded-lg"
+                            onLoad={(e) =>
+                              URL.revokeObjectURL(e.currentTarget.src)
+                            }
+                          />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                            <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removeImage(index)}><X className="h-4 w-4" /></Button>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => removeImage(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
-                          {index === 0 && <Badge className="absolute bottom-2 left-2">Cover</Badge>}
+                          {index === 0 && (
+                            <Badge className="absolute bottom-2 left-2">
+                              Cover
+                            </Badge>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -574,27 +1104,58 @@ export default function NewBundlePage() {
 
               {/* ZIP File Upload Card */}
               <Card>
-                <CardHeader><CardTitle>Bundle ZIP File *</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Bundle ZIP File *</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  <label htmlFor="zip-upload" className={`cursor-pointer border-2 border-dashed rounded-lg p-8 text-center block hover:bg-muted/50 transition-colors ${errors.zipFile ? "border-destructive" : "border-muted-foreground/25"}`}>
+                  <label
+                    htmlFor="zip-upload"
+                    className={`cursor-pointer border-2 border-dashed rounded-lg p-8 text-center block hover:bg-muted/50 transition-colors ${
+                      errors.zipFile
+                        ? "border-destructive"
+                        : "border-muted-foreground/25"
+                    }`}
+                  >
                     <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-lg font-medium">Click to Upload ZIP File</p>
-                    <p className="text-sm text-muted-foreground">Upload the complete bundle source code as a ZIP file</p>
-                    <input type="file" accept=".zip" onChange={handleZipUpload} className="hidden" id="zip-upload" />
+                    <p className="text-lg font-medium">
+                      Click to Upload ZIP File
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Upload the complete bundle source code as a ZIP file
+                    </p>
+                    <input
+                      type="file"
+                      accept=".zip"
+                      onChange={handleZipUpload}
+                      className="hidden"
+                      id="zip-upload"
+                    />
                   </label>
-                  {errors.zipFile && <p className="text-sm text-destructive">{errors.zipFile}</p>}
+                  {errors.zipFile && (
+                    <p className="text-sm text-destructive">{errors.zipFile}</p>
+                  )}
                   {zipFile && (
                     <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <span className="text-blue-600 font-medium text-sm">ZIP</span>
+                          <span className="text-blue-600 font-medium text-sm">
+                            ZIP
+                          </span>
                         </div>
                         <div>
-                          <p className="font-medium truncate max-w-xs">{zipFile.name}</p>
-                          <p className="text-sm text-muted-foreground">{(zipFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                          <p className="font-medium truncate max-w-xs">
+                            {zipFile.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {(zipFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
                         </div>
                       </div>
-                      <Button variant="destructive" size="sm" onClick={() => setZipFile(null)}>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setZipFile(null)}
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -606,31 +1167,45 @@ export default function NewBundlePage() {
             {/* Advanced Tab */}
             <TabsContent value="advanced" className="space-y-6 pt-6">
               <Card>
-                <CardHeader><CardTitle>URLs & Links</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>URLs & Links</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="demoUrl">Demo URL</Label>
-                    <Input 
-                      id="demoUrl" 
-                      type="url" 
-                      value={formData.demoUrl} 
-                      onChange={(e) => handleInputChange("demoUrl", e.target.value)} 
+                    <Input
+                      id="demoUrl"
+                      type="url"
+                      value={formData.demoUrl}
+                      onChange={(e) =>
+                        handleInputChange("demoUrl", e.target.value)
+                      }
                       placeholder="https://demo.example.com"
                       className={errors.demoUrl ? "border-destructive" : ""}
                     />
-                    {errors.demoUrl && <p className="text-sm text-destructive">{errors.demoUrl}</p>}
+                    {errors.demoUrl && (
+                      <p className="text-sm text-destructive">
+                        {errors.demoUrl}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="githubUrl">GitHub URL</Label>
-                    <Input 
-                      id="githubUrl" 
-                      type="url" 
-                      value={formData.githubUrl} 
-                      onChange={(e) => handleInputChange("githubUrl", e.target.value)} 
+                    <Input
+                      id="githubUrl"
+                      type="url"
+                      value={formData.githubUrl}
+                      onChange={(e) =>
+                        handleInputChange("githubUrl", e.target.value)
+                      }
                       placeholder="https://github.com/username/repo"
                       className={errors.githubUrl ? "border-destructive" : ""}
                     />
-                    {errors.githubUrl && <p className="text-sm text-destructive">{errors.githubUrl}</p>}
+                    {errors.githubUrl && (
+                      <p className="text-sm text-destructive">
+                        {errors.githubUrl}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -641,34 +1216,85 @@ export default function NewBundlePage() {
         {/* Sidebar */}
         <div className="space-y-6 lg:sticky top-8">
           <Card>
-            <CardHeader><CardTitle>Status & Visibility</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Status & Visibility</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between"><Label htmlFor="isFeatured" className="font-normal">Featured on homepage</Label><Switch id="isFeatured" checked={formData.isFeatured} onCheckedChange={(checked) => handleInputChange("isFeatured", checked)} /></div>
-              <div className="flex items-center justify-between"><Label htmlFor="isBestseller" className="font-normal">Mark as bestseller</Label><Switch id="isBestseller" checked={formData.isBestseller} onCheckedChange={(checked) => handleInputChange("isBestseller", checked)} /></div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="isFeatured" className="font-normal">
+                  Featured on homepage
+                </Label>
+                <Switch
+                  id="isFeatured"
+                  checked={formData.isFeatured}
+                  onCheckedChange={(checked) =>
+                    handleInputChange("isFeatured", checked)
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="isBestseller" className="font-normal">
+                  Mark as bestseller
+                </Label>
+                <Switch
+                  id="isBestseller"
+                  checked={formData.isBestseller}
+                  onCheckedChange={(checked) =>
+                    handleInputChange("isBestseller", checked)
+                  }
+                />
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Live Preview</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Live Preview</CardTitle>
+            </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
                   {images.length > 0 ? (
-                    <img src={URL.createObjectURL(images[0])} alt="Preview" className="w-full h-full object-cover" />
+                    <img
+                      src={URL.createObjectURL(images[0])}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <span className="text-sm text-muted-foreground">Upload an Image</span>
+                    <span className="text-sm text-muted-foreground">
+                      Upload an Image
+                    </span>
                   )}
                 </div>
                 <div>
-                  <h3 className="font-semibold truncate">{formData.name || "Bundle Name"}</h3>
-                  <p className="text-sm text-muted-foreground truncate">{formData.shortDescription || "Short description appears here"}</p>
+                  <h3 className="font-semibold truncate">
+                    {formData.name || "Bundle Name"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {formData.shortDescription ||
+                      "Short description appears here"}
+                  </p>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    {formData.price && <span className="font-bold text-lg">₹{formData.price}</span>}
-                    {formData.originalPrice && (<span className="text-sm text-muted-foreground line-through ml-2">₹{formData.originalPrice}</span>)}
+                    {formData.price && (
+                      <span className="font-bold text-lg">
+                        ₹{formData.price}
+                      </span>
+                    )}
+                    {formData.originalPrice && (
+                      <span className="text-sm text-muted-foreground line-through ml-2">
+                        ₹{formData.originalPrice}
+                      </span>
+                    )}
                   </div>
-                  <Badge variant={formData.isActive ? "default" : "secondary"}>{isLoading ? "Saving..." : (formData.isActive ? "Active" : "Draft")}</Badge>
+                  <Badge variant={formData.isActive ? "default" : "secondary"}>
+                    {isLoading
+                      ? "Saving..."
+                      : formData.isActive
+                      ? "Active"
+                      : "Draft"}
+                  </Badge>
                 </div>
               </div>
             </CardContent>
@@ -676,5 +1302,5 @@ export default function NewBundlePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
