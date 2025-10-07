@@ -15,6 +15,12 @@ import {
   TrendingUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MainNavigation } from "@/components/main-navigation"
@@ -478,6 +484,73 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+          <div className="mb-20">
+            <h2 className="text-3xl font-bold mb-8 text-center">
+              Frequently Asked Questions
+            </h2>
+            <div className="max-w-3xl mx-auto">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger className="text-left">
+                    How do I get the bundle after purchase?
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    After completing your purchase, you'll receive an email with
+                    download links and access instructions within 2 hours. The
+                    email will include the complete source code, comprehensive
+                    documentation, video tutorials, and setup guide.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                  <AccordionTrigger className="text-left">
+                    What's your refund policy?
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    We offer a 30-day money-back guarantee. If you're not
+                    satisfied with the bundle for any reason, contact us within
+                    30 days of purchase for a full refund. No questions asked.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-3">
+                  <AccordionTrigger className="text-left">
+                    Do you provide support and updates?
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    Yes! We provide 6 months of free updates and email support
+                    for setup questions and bug fixes. Premium support includes
+                    code customization help and priority responses within 24
+                    hours.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-4">
+                  <AccordionTrigger className="text-left">
+                    Can I use this for commercial projects?
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    Absolutely! All our bundles come with a commercial license.
+                    You can use them in unlimited personal and commercial
+                    projects, including client work and SaaS applications. The
+                    only restriction is that you cannot resell the bundle
+                    itself.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-5">
+                  <AccordionTrigger className="text-left">
+                    What if I need help with customization?
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    Our bundles are designed to be easily customizable. We
+                    provide detailed documentation and examples for common
+                    customizations. If you need additional help, our premium
+                    support team can assist with specific customization
+                    requests.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </div>
 
       {/* CTA Section */}
       <section className="py-24 bg-gradient-to-br from-blue-600 to-purple-700 text-white">

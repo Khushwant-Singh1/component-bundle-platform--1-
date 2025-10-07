@@ -357,6 +357,40 @@ export async function POST(request: NextRequest) {
           })),
         })
       }
+      
+      // Add setup steps
+      if (validatedData.setup && validatedData.setup.length > 0) {
+        await tx.bundleSetup.createMany({
+          data: validatedData.setup.map((setupItem, index) => ({
+            bundleId: newBundle.id,
+            title: setupItem.title,
+            description: setupItem.description,
+            order: index,
+          })),
+        })
+      }
+      
+      // Add perfects
+      if (validatedData.perfects && validatedData.perfects.length > 0) {
+        await tx.bundlePerfect.createMany({
+          data: validatedData.perfects.map((description, index) => ({
+            bundleId: newBundle.id,
+            description,
+            order: index,
+          })),
+        })
+      }
+      // Add benefits
+      if (validatedData.benefits && validatedData.benefits.length > 0) {
+        await tx.bundleBenefit.createMany({
+          data: validatedData.benefits.map((description, index) => ({
+            bundleId: newBundle.id,
+            description,
+            order: index,
+          })),
+        })
+      }
+
 
       return newBundle
     }, {

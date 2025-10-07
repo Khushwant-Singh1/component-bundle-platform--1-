@@ -30,7 +30,13 @@ export const createBundleSchema = z.object({
   tags: z.array(z.string()).optional(),
   techStack: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
+  perfects: z.array(z.string()).optional(),
+  benefits: z.array(z.string()).optional(),
   includes: z.array(z.string()).optional(),
+  setup: z.array(z.object({
+    title: z.string().min(1, "Setup title is required"),
+    description: z.string().min(1, "Setup description is required")
+  })).optional(),
   images: z.array(z.string()).optional(),
 })
 

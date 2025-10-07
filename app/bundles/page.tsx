@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-
 import { prisma } from "@/lib/db" // Import your Prisma client
 import { Prisma } from "@prisma/client"
 
