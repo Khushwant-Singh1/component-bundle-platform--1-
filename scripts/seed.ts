@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Starting database seed...")
+  console.log("Starting database seed...");
 
   // Create admin user
   const adminUser = await prisma.user.upsert({
@@ -14,7 +14,7 @@ async function main() {
       name: "Admin User",
       role: "ADMIN",
     },
-  })
+  });
 
   // Create sample customer
   const customer = await prisma.user.upsert({
@@ -25,7 +25,7 @@ async function main() {
       name: "John Doe",
       role: "CUSTOMER",
     },
-  })
+  });
 
   // Create tags
   const tags = await Promise.all([
@@ -54,7 +54,7 @@ async function main() {
       update: {},
       create: { name: "Dashboard", color: "#8B5CF6" },
     }),
-  ])
+  ]);
 
   // Create technologies
   const technologies = await Promise.all([
@@ -83,14 +83,15 @@ async function main() {
       update: {},
       create: { name: "NextAuth.js", category: "backend" },
     }),
-  ])
+  ]);
 
   // Create sample bundle
   const bundle = await prisma.bundle.create({
     data: {
       name: "Dashboard Pro",
       slug: "dashboard-pro",
-      shortDescription: "Complete admin dashboard solution with analytics and user management",
+      shortDescription:
+        "Complete admin dashboard solution with analytics and user management",
       description:
         "Dashboard Pro is a comprehensive admin dashboard solution built with Next.js 14, TypeScript, and Tailwind CSS. It includes everything you need to build a modern, responsive admin interface with real-time analytics, user management, and beautiful data visualizations.",
       price: 49.0,
@@ -105,7 +106,7 @@ async function main() {
       isFeatured: true,
       isBestseller: true,
     },
-  })
+  });
 
   // Add bundle images
   await prisma.bundleImage.createMany({
@@ -129,7 +130,7 @@ async function main() {
         order: 2,
       },
     ],
-  })
+  });
 
   // Link bundle to tags
   await prisma.bundleTag.createMany({
@@ -140,7 +141,7 @@ async function main() {
       { bundleId: bundle.id, tagId: tags[3].id }, // Tailwind CSS
       { bundleId: bundle.id, tagId: tags[4].id }, // Dashboard
     ],
-  })
+  });
 
   // Link bundle to technologies
   await prisma.bundleTech.createMany({
@@ -151,7 +152,7 @@ async function main() {
       { bundleId: bundle.id, techId: technologies[3].id }, // Prisma
       { bundleId: bundle.id, techId: technologies[4].id }, // NextAuth.js
     ],
-  })
+  });
 
   // Add bundle features
   await prisma.bundleFeature.createMany({
@@ -177,7 +178,7 @@ async function main() {
         order: 3,
       },
     ],
-  })
+  });
 
   // Add bundle includes
   await prisma.bundleInclude.createMany({
@@ -203,7 +204,78 @@ async function main() {
         order: 3,
       },
     ],
-  })
+  });
+  // Add Perfects
+  await prisma.bundlePerfect.createMany({
+    data: [
+      {
+        bundleId: bundle.id,
+        description:
+          "Perfect for developers looking to build a complete dashboard",
+        order: 0,
+      },
+      {
+        bundleId: bundle.id,
+        description: "Ideal for teams working on data-driven applications",
+        order: 1,
+      },
+      {
+        bundleId: bundle.id,
+        description:
+          "Great for anyone who wants to learn modern web development",
+        order: 2,
+      },
+    ],
+  });
+
+  // Add bundle benefits
+  await prisma.bundleBenefit.createMany({
+    data: [
+      {
+        bundleId: bundle.id,
+        description: "Increased productivity with ready-to-use components",
+        order: 0,
+      },
+      {
+        bundleId: bundle.id,
+        description: "Access to exclusive community support",
+        order: 1,
+      },
+      {
+        bundleId: bundle.id,
+        description: "Regular updates with new features and improvements",
+        order: 2,
+      },
+      {
+        bundleId: bundle.id,
+        description: "Comprehensive documentation and tutorials",
+        order: 3,
+      },
+    ],
+  });
+  // Add setup steps
+  await prisma.bundleSetup.createMany({
+    data: [
+      {
+        bundleId: bundle.id,
+        title: "Installation",
+        description: "Follow these steps to install the bundle:",
+        order: 0,
+      },
+      {
+        bundleId: bundle.id,
+        title: "Configuration",
+        description: "Configure the bundle by editing the config file:",
+        order: 1,
+      },
+      {
+        bundleId: bundle.id,
+        title: "Usage",
+        description: "Learn how to use the bundle in your project:",
+        order: 2,
+      },
+    ],
+  });
 
   // Create sample review
   await prisma.review.create({
@@ -216,7 +288,7 @@ async function main() {
         "This dashboard template saved me weeks of development time. The code quality is exceptional and the documentation is very comprehensive.",
       isPublic: true,
     },
-  })
+  });
 
   // Create sample order
   const order = await prisma.order.create({
@@ -229,7 +301,7 @@ async function main() {
       paymentMethod: "stripe",
       paymentId: "pi_test_123456789",
     },
-  })
+  });
 
   // Create order item
   await prisma.orderItem.create({
@@ -239,7 +311,7 @@ async function main() {
       price: 49.0,
       quantity: 1,
     },
-  })
+  });
 
   // Create sample FAQ entries
   await prisma.fAQ.createMany({
@@ -262,13 +334,14 @@ async function main() {
       },
       {
         question: "Do you provide support and updates?",
-        answer: "Yes! We provide 6 months of free updates and email support for setup questions and bug fixes.",
+        answer:
+          "Yes! We provide 6 months of free updates and email support for setup questions and bug fixes.",
         category: "support",
         order: 2,
         isActive: true,
       },
     ],
-  })
+  });
 
   // Create email templates
   await prisma.emailTemplate.createMany({
@@ -278,27 +351,30 @@ async function main() {
         subject: "Order Confirmation - BundleHub",
         htmlBody:
           "<h1>Thank you for your purchase!</h1><p>Your order has been confirmed and will be processed shortly.</p>",
-        textBody: "Thank you for your purchase! Your order has been confirmed and will be processed shortly.",
+        textBody:
+          "Thank you for your purchase! Your order has been confirmed and will be processed shortly.",
         isActive: true,
       },
       {
         name: "bundle_delivery",
         subject: "Your Bundle is Ready - BundleHub",
-        htmlBody: "<h1>Your bundle is ready for download!</h1><p>Click the link below to download your bundle.</p>",
-        textBody: "Your bundle is ready for download! Click the link below to download your bundle.",
+        htmlBody:
+          "<h1>Your bundle is ready for download!</h1><p>Click the link below to download your bundle.</p>",
+        textBody:
+          "Your bundle is ready for download! Click the link below to download your bundle.",
         isActive: true,
       },
     ],
-  })
+  });
 
-  console.log("Database seed completed successfully!")
+  console.log("Database seed completed successfully!");
 }
 
 main()
   .catch((e) => {
-    console.error("Error during seed:", e)
-    process.exit(1)
+    console.error("Error during seed:", e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });
