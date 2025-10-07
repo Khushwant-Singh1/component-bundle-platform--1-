@@ -55,7 +55,9 @@ export default async function AdminLayout({
   const data = await prisma.$transaction([
     prisma.bundle.count(),
     prisma.order.count(),
-    prisma.user.count(),
+    prisma.user.count({
+        where: { role: "CUSTOMER" }
+      }),
     prisma.review.count(),
     prisma.contactSubmission.count(),
   ]);

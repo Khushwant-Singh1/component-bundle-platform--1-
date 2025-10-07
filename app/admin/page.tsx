@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,163 +15,154 @@ import {
   ShoppingCart,
   Star,
   ArrowUpRight,
+  Loader2,
 } from "lucide-react"
 import Link from "next/link"
 
-const stats = [
-  {
-    title: "Total Revenue",
-    value: "$12,847",
-    change: "+12.5%",
-    trend: "up",
-    icon: DollarSign,
-    description: "vs last month",
-  },
-  {
-    title: "Total Bundles",
-    value: "24",
-    change: "+2",
-    trend: "up",
-    icon: Package,
-    description: "active bundles",
-  },
-  {
-    title: "Total Customers",
-    value: "1,247",
-    change: "+18.2%",
-    trend: "up",
-    icon: Users,
-    description: "registered users",
-  },
-  {
-    title: "Total Downloads",
-    value: "8,429",
-    change: "+7.3%",
-    trend: "up",
-    icon: Download,
-    description: "this month",
-  },
-]
+interface Stat {
+  title: string
+  value: string
+  change: string
+  trend: "up" | "down"
+  description: string
+}
 
-const recentOrders = [
-  {
-    id: "ORD-001",
-    customer: "John Doe",
-    email: "john@example.com",
-    bundle: "Dashboard Pro",
-    amount: "$49",
-    status: "completed",
-    date: "2 hours ago",
-  },
-  {
-    id: "ORD-002",
-    customer: "Sarah Chen",
-    email: "sarah@example.com",
-    bundle: "Auth Starter Kit",
-    amount: "$29",
-    status: "completed",
-    date: "4 hours ago",
-  },
-  {
-    id: "ORD-003",
-    customer: "Mike Rodriguez",
-    email: "mike@example.com",
-    bundle: "E-commerce Pro",
-    amount: "$79",
-    status: "pending",
-    date: "6 hours ago",
-  },
-  {
-    id: "ORD-004",
-    customer: "Emily Johnson",
-    email: "emily@example.com",
-    bundle: "Landing Page Kit",
-    amount: "$19",
-    status: "completed",
-    date: "8 hours ago",
-  },
-]
+interface RecentOrder {
+  id: string
+  customer: string
+  email: string
+  bundle: string
+  amount: string
+  status: string
+  date: string
+}
 
-const topBundles = [
-  {
-    name: "Dashboard Pro",
-    sales: 156,
-    revenue: "$7,644",
-    trend: "up",
-    change: "+23%",
-  },
-  {
-    name: "E-commerce Pro",
-    sales: 89,
-    revenue: "$7,031",
-    trend: "up",
-    change: "+18%",
-  },
-  {
-    name: "Auth Starter Kit",
-    sales: 134,
-    revenue: "$3,886",
-    trend: "up",
-    change: "+12%",
-  },
-  {
-    name: "SaaS Starter Pro",
-    sales: 67,
-    revenue: "$6,633",
-    trend: "down",
-    change: "-5%",
-  },
-]
+interface TopBundle {
+  name: string
+  sales: number
+  revenue: string
+  trend: "up" | "down"
+  change: string
+}
 
-const recentReviews = [
-  {
-    customer: "Alex Thompson",
-    bundle: "Dashboard Pro",
-    rating: 5,
-    comment: "Excellent quality code and documentation. Saved me weeks of work!",
-    date: "1 day ago",
-  },
-  {
-    customer: "Lisa Wang",
-    bundle: "Auth Starter Kit",
-    rating: 5,
-    comment: "Perfect authentication solution. Easy to integrate and customize.",
-    date: "2 days ago",
-  },
-  {
-    customer: "David Brown",
-    bundle: "E-commerce Pro",
-    rating: 4,
-    comment: "Great bundle with comprehensive features. Minor setup issues but support was helpful.",
-    date: "3 days ago",
-  },
-]
+interface RecentReview {
+  customer: string
+  bundle: string
+  rating: number
+  comment: string
+  date: string
+}
+
+interface AdminData {
+  stats: Stat[]
+  recentOrders: RecentOrder[]
+  topBundles: TopBundle[]
+  recentReviews: RecentReview[]
+}
+
+const iconMap = {
+  "Total Revenue": DollarSign,
+  "Total Bundles": Package,
+  "Total Customers": Users,
+  "Total Downloads": Download,
+}
 
 export default function AdminDashboard() {
+  const [data, setData] = useState<AdminData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch("/api/admin")
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch admin data")
+        }
+        
+        const result = await response.json()
+        
+        if (result.success) {
+          setData(result.data)
+        } else {
+          throw new Error(result.error?.message || "Failed to fetch data")
+        }
+      } catch (err) {
+        console.error("Error fetching admin data:", err)
+        setError(err instanceof Error ? err.message : "An error occurred")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAdminData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading dashboard data...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="text-red-500 mb-2">Error loading dashboard</div>
+          <div className="text-sm text-muted-foreground">{error}</div>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-muted-foreground">No data available</div>
+      </div>
+    )
+  }
   return (
     <div className="space-y-8">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                {stat.trend === "up" ? (
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 text-red-500" />
-                )}
-                <span className={stat.trend === "up" ? "text-green-500" : "text-red-500"}>{stat.change}</span>
-                <span>{stat.description}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {data.stats.map((stat) => {
+          const IconComponent = iconMap[stat.title as keyof typeof iconMap] || DollarSign
+          return (
+            <Card key={stat.title}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+                <IconComponent className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  {stat.trend === "up" ? (
+                    <TrendingUp className="h-3 w-3 text-green-500" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-500" />
+                  )}
+                  <span className={stat.trend === "up" ? "text-green-500" : "text-red-500"}>{stat.change}</span>
+                  <span>{stat.description}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -187,7 +179,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentOrders.map((order) => (
+              {data.recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -222,7 +214,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topBundles.map((bundle, index) => (
+              {data.topBundles.map((bundle, index) => (
                 <div key={bundle.name} className="flex items-center justify-between p-3 rounded-lg border">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-white text-sm font-bold">
@@ -268,7 +260,7 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentReviews.map((review, index) => (
+            {data.recentReviews.map((review, index) => (
               <div key={index} className="p-4 rounded-lg border">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
