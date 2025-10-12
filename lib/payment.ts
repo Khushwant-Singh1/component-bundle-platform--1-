@@ -7,7 +7,7 @@ interface PaymentQRData {
   email: string
 }
 
-export async function generatePaymentQR(data: PaymentQRData): Promise<string> {
+export async function generatePaymentQR(): Promise<string> {
   // Return your provided QR code image for payment
   // This QR code will be shown to customers for UPI payment
   return "https://res.cloudinary.com/dklqhgo8r/image/upload/v1758137642/cachesm-qr-1758137393758_hztjjq.jpg"

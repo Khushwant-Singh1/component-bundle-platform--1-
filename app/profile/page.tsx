@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { SignOutButton } from "@/components/auth/signout-button"
 import { SecureDownloadButton } from "@/components/secure-download-button"
-import { User, Mail, Calendar, Download, ShoppingCart, Star } from "lucide-react"
+import { User, Calendar, Download, ShoppingCart, Star } from "lucide-react"
 import Link from "next/link"
 
 export default async function ProfilePage() {
@@ -205,7 +205,7 @@ export default async function ProfilePage() {
             <CardHeader>
               <CardTitle>Your Reviews</CardTitle>
               <CardDescription>
-                Reviews you've written for purchased bundles
+                Reviews you&apos;ve written for purchased bundles
               </CardDescription>
             </CardHeader>
             <CardContent>

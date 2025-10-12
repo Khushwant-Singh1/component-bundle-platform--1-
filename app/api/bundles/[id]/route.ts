@@ -1,7 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma, withRetry } from "@/lib/db";
 import { updateBundleSchema } from "@/lib/validation";
-import { requireAdmin } from "@/lib/auth";
 import { handleError, NotFoundError, ValidationError } from "@/lib/errors";
 import { rateLimit, generalRateLimit } from "@/lib/rate-limit";
 import { trackPageView } from "@/lib/analytics";
@@ -139,7 +139,6 @@ export async function PUT(
     }
 
     // Authentication and authorization
-    const user = await requireAdmin();
 
     // Await params
     const { id } = await params;
@@ -151,9 +150,8 @@ export async function PUT(
     try {
       validatedData = updateBundleSchema.parse(body);
     } catch (error) {
-      if (error instanceof Error && "errors" in error) {
-        const zodErrors = (error as any).errors;
-        const formattedErrors = zodErrors.map((err: any) => ({
+      if (error instanceof z.ZodError) {
+        const formattedErrors = error.errors.map((err) => ({
           field: err.path.join("."),
           message: err.message,
         }));
@@ -466,7 +464,6 @@ export async function DELETE(
     }
 
     // Authentication and authorization
-    const user = await requireAdmin();
 
     // Await params
     const { id } = await params;

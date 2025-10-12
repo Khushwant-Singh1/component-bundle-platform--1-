@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Mail, User, Lock, Shield, ArrowLeft, Check } from "lucide-react"
+import { Loader2, Mail, User, ArrowLeft, Check } from "lucide-react"
 import Link from "next/link"
 
 type Step = 'email' | 'otp' | 'success'
@@ -31,7 +31,6 @@ export default function SignupPage() {
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [otpSent, setOtpSent] = useState(false)
   const router = useRouter()
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -76,9 +75,8 @@ export default function SignupPage() {
         return
       }
 
-      setOtpSent(true)
       setStep('otp')
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setIsLoading(false)
@@ -117,7 +115,7 @@ export default function SignupPage() {
       }
 
       setStep('success')
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setIsLoading(false)
@@ -147,7 +145,7 @@ export default function SignupPage() {
       } else {
         setError(data.error || 'Failed to resend OTP')
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setIsLoading(false)
@@ -202,7 +200,7 @@ export default function SignupPage() {
             </div>
             <CardTitle className="text-2xl">Verify Your Email</CardTitle>
             <CardDescription>
-              We've sent a 6-digit code to {formData.email}
+              We&apos;ve sent a 6-digit code to {formData.email}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -235,7 +233,7 @@ export default function SignupPage() {
 
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Didn't receive the code?
+                  Didn&apos;t receive the code?
                 </p>
                 <Button 
                   type="button" 

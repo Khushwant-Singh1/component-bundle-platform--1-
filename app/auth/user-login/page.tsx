@@ -61,7 +61,7 @@ export default function UserLoginPage() {
       }
 
       setStep('otp')
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setIsLoading(false)
@@ -112,7 +112,7 @@ export default function UserLoginPage() {
       // Redirect to user dashboard or home
       router.push("/profile")
       router.refresh()
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setIsLoading(false)
@@ -141,7 +141,7 @@ export default function UserLoginPage() {
       } else {
         setError(data.error || 'Failed to resend OTP')
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setIsLoading(false)
@@ -158,7 +158,7 @@ export default function UserLoginPage() {
             </div>
             <CardTitle className="text-2xl">Verify Your Email</CardTitle>
             <CardDescription>
-              We've sent a 6-digit code to {formData.email}
+              We&apos;ve sent a 6-digit code to {formData.email}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -191,7 +191,7 @@ export default function UserLoginPage() {
 
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Didn't receive the code?
+                  Didn&apos;t receive the code?
                 </p>
                 <Button 
                   type="button" 
@@ -260,7 +260,7 @@ export default function UserLoginPage() {
 
             <div className="text-center space-y-2">
               <p className="text-sm text-muted-foreground">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link href="/auth/signup" className="text-blue-600 hover:underline">
                   Sign up here
                 </Link>

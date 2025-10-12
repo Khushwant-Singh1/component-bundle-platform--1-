@@ -39,7 +39,7 @@ export default function SetupPage() {
       }
 
       setSuccess("Admin user created successfully! You can now login to the admin panel.")
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)

@@ -888,7 +888,7 @@ export default function NewBundlePage() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>What's Included *</CardTitle>
+                  <CardTitle>What&apos;s Included *</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {includes.map((include, index) => (
@@ -1072,6 +1072,7 @@ export default function NewBundlePage() {
                           key={index}
                           className="relative group aspect-video"
                         >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={URL.createObjectURL(image)}
                             alt={image.name}
@@ -1255,6 +1256,7 @@ export default function NewBundlePage() {
               <div className="space-y-3">
                 <div className="aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
                   {images.length > 0 ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={URL.createObjectURL(images[0])}
                       alt="Preview"

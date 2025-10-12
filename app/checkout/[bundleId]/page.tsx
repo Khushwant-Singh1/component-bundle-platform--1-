@@ -249,7 +249,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                   </div>
                   <div>
                     <p className="font-medium">Email verification</p>
-                    <p className="text-muted-foreground">We'll send an OTP to verify your email address</p>
+                    <p className="text-muted-foreground">We&apos;ll send an OTP to verify your email address</p>
                   </div>
                 </div>
                 <div className="flex gap-3">

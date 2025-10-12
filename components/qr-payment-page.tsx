@@ -68,7 +68,7 @@ export function QRPaymentPage({
               Your payment proof has been submitted and is being reviewed by our team.
             </p>
             <p className="text-sm text-muted-foreground">
-              You'll receive an email with your bundle download link once the payment is approved (usually within 2-4 hours).
+              You&apos;ll receive an email with your bundle download link once the payment is approved (usually within 2-4 hours).
             </p>
           </div>
         </CardContent>

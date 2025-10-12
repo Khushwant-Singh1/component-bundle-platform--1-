@@ -59,12 +59,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Generate payment QR code
-    const paymentQr = await generatePaymentQR({
-      orderId: order.id,
-      amount: Number(order.totalAmount),
-      customerName: order.customerName,
-      email: order.email,
-    })
+    const paymentQr = await generatePaymentQR()
 
     return NextResponse.json({
       success: true,

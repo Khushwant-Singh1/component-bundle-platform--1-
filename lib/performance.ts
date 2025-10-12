@@ -7,13 +7,13 @@ interface PerformanceMetric {
   startTime: number
   endTime?: number
   duration?: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 class PerformanceTracker {
   private metrics: Map<string, PerformanceMetric> = new Map()
 
-  start(operationId: string, operation: string, metadata?: Record<string, any>) {
+  start(operationId: string, operation: string, metadata?: Record<string, unknown>) {
     this.metrics.set(operationId, {
       operation,
       startTime: Date.now(),
@@ -73,7 +73,7 @@ export async function measureAsync<T>(
   operationId: string,
   operation: string,
   asyncFn: () => Promise<T>,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<T> {
   performanceTracker.start(operationId, operation, metadata)
   try {
@@ -90,7 +90,7 @@ export function measureSync<T>(
   operationId: string,
   operation: string,
   syncFn: () => T,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): T {
   performanceTracker.start(operationId, operation, metadata)
   try {
@@ -104,7 +104,7 @@ export function measureSync<T>(
 
 // Express/Next.js middleware for automatic performance tracking
 export function createPerformanceMiddleware(operation: string) {
-  return (req: any, res: any, next: any) => {
+  return (req: { method: string; url: string; headers: Record<string, string> }, res: { end: (...args: unknown[]) => void } & Record<string, unknown>, next: () => void) => {
     const operationId = `${operation}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const metadata = {
       method: req.method,
@@ -116,7 +116,7 @@ export function createPerformanceMiddleware(operation: string) {
     
     // Override res.end to capture completion time
     const originalEnd = res.end
-    res.end = function(...args: any[]) {
+    res.end = function(...args: unknown[]) {
       performanceTracker.end(operationId)
       performanceTracker.clear(operationId)
       originalEnd.apply(this, args)
@@ -153,7 +153,7 @@ export function logEmailPerformance(orderId: string, metrics: EmailMetrics) {
 export async function measureDatabaseOperation<T>(
   operation: string,
   dbFn: () => Promise<T>,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<T> {
   const operationId = `db-${operation}-${Date.now()}`
   return measureAsync(operationId, `database.${operation}`, dbFn, metadata)
@@ -163,7 +163,7 @@ export async function measureDatabaseOperation<T>(
 export async function measureS3Operation<T>(
   operation: string,
   s3Fn: () => Promise<T>,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<T> {
   const operationId = `s3-${operation}-${Date.now()}`
   return measureAsync(operationId, `s3.${operation}`, s3Fn, metadata)

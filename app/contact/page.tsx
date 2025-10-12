@@ -53,7 +53,7 @@ export default function ContactPage() {
               <div>
                 <h2 className="text-2xl font-bold mb-6">How Can We Help?</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Choose the best way to reach us based on your needs. We're committed to providing excellent support.
+                  Choose the best way to reach us based on your needs. We&apos;re committed to providing excellent support.
                 </p>
               </div>
 
@@ -152,7 +152,7 @@ export default function ContactPage() {
                 <CardHeader>
                   <CardTitle className="text-2xl">Send us a Message</CardTitle>
                   <p className="text-muted-foreground">
-                    Fill out the form below and we'll get back to you as soon as possible.
+                    Fill out the form below and we&apos;ll get back to you as soon as possible.
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -229,7 +229,7 @@ export default function ContactPage() {
             <div className="text-center space-y-4 mb-12">
               <h2 className="text-3xl font-bold">Frequently Asked Questions</h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Quick answers to common questions. Can't find what you're looking for? Contact us directly.
+                Quick answers to common questions. Can&apos;t find what you&apos;re looking for? Contact us directly.
               </p>
             </div>
 
@@ -267,7 +267,7 @@ export default function ContactPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">
-                      We offer a 30-day money-back guarantee on all bundles. Contact us if you're not satisfied for any
+                      We offer a 30-day money-back guarantee on all bundles. Contact us if you&apos;re not satisfied for any
                       reason.
                     </p>
                   </CardContent>

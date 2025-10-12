@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Search, Plus, MoreHorizontal, Edit, Eye, Trash2, Filter, Download, Star, TrendingUp } from 'lucide-react'
+import { Search, Plus, MoreHorizontal, Edit, Eye, Filter, Download, Star, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -28,7 +28,7 @@ async function getBundles() {
 /* ------------------------------------------------------------------ */
 /* Aggregations                                                       */
 /* ------------------------------------------------------------------ */
-async function getStats(bundles: Awaited<ReturnType<typeof getBundles>>) {
+async function getStats() {
   const [totalBundles, activeBundles, totalSales, totalRevenue] = await Promise.all([
     prisma.bundle.count(),
     prisma.bundle.count({ where: { isActive: true } }),
@@ -50,7 +50,7 @@ async function getStats(bundles: Awaited<ReturnType<typeof getBundles>>) {
 export default async function BundlesPage() {
   try {
     const bundles = await getBundles()
-    const stats = await getStats(bundles)
+    const stats = await getStats()
 
     // Don't show 404 if no bundles, just show empty state
     // if (!bundles.length) notFound()

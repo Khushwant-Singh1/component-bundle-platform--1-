@@ -15,14 +15,14 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       ...result
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Health check failed:', error)
     
     return NextResponse.json({
       status: 'unhealthy',
       database: 'disconnected',
-      error: error.message,
-      code: error.code,
+      error: (error as Error).message,
+      code: (error as { code?: string }).code,
       timestamp: new Date().toISOString()
     }, { status: 503 })
   }

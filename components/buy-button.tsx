@@ -13,7 +13,7 @@ interface BuyButtonProps {
   children: React.ReactNode
 }
 
-export function BuyButton({ bundleId, bundleName, price, className, children }: BuyButtonProps) {
+export function BuyButton({ bundleId, className, children }: BuyButtonProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
 

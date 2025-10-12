@@ -154,7 +154,7 @@ async function handleOrderBasedDownload(
   // Validate parameters
   try {
     downloadSchema.parse({ orderId, email })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: { message: "Invalid email format", statusCode: 400 } },
       { status: 400 }

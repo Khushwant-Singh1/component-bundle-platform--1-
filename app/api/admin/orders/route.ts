@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (status && status !== "all") {
       if (status === "APPROVED") {
         // Include both APPROVED and COMPLETED orders for the "Approved" tab
@@ -71,17 +71,17 @@ export async function GET(request: NextRequest) {
           },
         },
       })
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
       console.error("Database connection error:", dbError)
       
       // Check if this is a database connectivity issue
-      if (dbError.code === 'P1001' || dbError.message?.includes("Can't reach database server")) {
+      if ((dbError as { code?: string }).code === 'P1001' || (dbError as { message?: string }).message?.includes("Can't reach database server")) {
         return NextResponse.json({
           success: false,
           error: { 
             message: "Database connection failed. Please check your database configuration.",
             code: "DATABASE_CONNECTION_ERROR",
-            details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+            details: process.env.NODE_ENV === 'development' ? (dbError as Error).message : undefined
           },
         }, { status: 503 })
       }

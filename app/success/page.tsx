@@ -133,7 +133,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
           {/* Next Steps */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">What's Next?</CardTitle>
+              <CardTitle className="text-lg">What&apos;s Next?</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div className="space-y-3">

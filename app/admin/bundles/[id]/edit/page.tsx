@@ -690,7 +690,7 @@ export default function EditBundlePage({ params }: PageProps) {
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Bundle Not Found</h2>
           <p className="text-muted-foreground mb-4">
-            The bundle you're looking for doesn't exist.
+            The bundle you&apos;re looking for doesn&apos;t exist.
           </p>
           <Button asChild>
             <Link href="/admin/bundles">
@@ -1098,7 +1098,7 @@ export default function EditBundlePage({ params }: PageProps) {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>What's Included</CardTitle>
+                  <CardTitle>What&apos;s Included</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {includes.map((include: string, index: number) => (

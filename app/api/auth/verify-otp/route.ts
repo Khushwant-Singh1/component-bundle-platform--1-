@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { hash } from 'bcryptjs'
-import { signIn } from 'next-auth/react'
 
 const verifyOTPSchema = z.object({
   email: z.string().email('Invalid email address'),

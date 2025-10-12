@@ -457,7 +457,7 @@ export default function HomePage() {
                       ))}
                     </div>
                     <blockquote className="text-muted-foreground leading-relaxed italic">
-                      "{testimonial.content}"
+                      &ldquo;{testimonial.content}&rdquo;
                     </blockquote>
                     <div className="flex items-center gap-4">
                       <Image
@@ -497,7 +497,7 @@ export default function HomePage() {
                     How do I get the bundle after purchase?
                   </AccordionTrigger>
                   <AccordionContent>
-                    After completing your purchase, you'll receive an email with
+                    After completing your purchase, you&apos;ll receive an email with
                     download links and access instructions within 2 hours. The
                     email will include the complete source code, comprehensive
                     documentation, video tutorials, and setup guide.
@@ -505,10 +505,10 @@ export default function HomePage() {
                 </AccordionItem>
                 <AccordionItem value="item-2">
                   <AccordionTrigger className="text-left">
-                    What's your refund policy?
+                    What&apos;s your refund policy?
                   </AccordionTrigger>
                   <AccordionContent>
-                    We offer a 30-day money-back guarantee. If you're not
+                    We offer a 30-day money-back guarantee. If you&apos;re not
                     satisfied with the bundle for any reason, contact us within
                     30 days of purchase for a full refund. No questions asked.
                   </AccordionContent>

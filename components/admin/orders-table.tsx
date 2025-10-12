@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -58,13 +58,10 @@ export function OrdersTable({ status }: OrdersTableProps) {
   const [successMessage, setSuccessMessage] = useState("")
   const [dbError, setDbError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchOrders()
-  }, [status])
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
-      setLoading(true)
+      setLoading(true)    // Rate limiting
+
       setDbError(null)
       const response = await fetch(`/api/admin/orders?status=${status}`)
       const data = await response.json()
@@ -83,7 +80,11 @@ export function OrdersTable({ status }: OrdersTableProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [status])
+
+  useEffect(() => {
+    fetchOrders()
+  }, [status, fetchOrders])
 
   const handleApprove = async (orderId: string) => {
     setActionLoading(orderId)
@@ -159,7 +160,7 @@ export function OrdersTable({ status }: OrdersTableProps) {
       } else {
         setError(data.error?.message || "Failed to reject order")
       }
-    } catch (error) {
+    } catch {
       setError("Failed to reject order")
     } finally {
       setActionLoading(null)

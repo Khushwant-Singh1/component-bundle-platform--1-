@@ -20,7 +20,7 @@ interface CheckoutFormProps {
 
 type CheckoutStep = "contact" | "verify" | "payment" | "upload" | "complete"
 
-export function CheckoutForm({ bundleId, bundleName, bundlePrice, userEmail = "", userName = "" }: CheckoutFormProps) {
+export function CheckoutForm({ bundleId, bundlePrice, userEmail = "", userName = "" }: CheckoutFormProps) {
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("contact")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -136,7 +136,7 @@ export function CheckoutForm({ bundleId, bundleName, bundlePrice, userEmail = ""
       }
 
       setError("")
-    } catch (err) {
+    } catch {
       setError("Failed to resend OTP")
     } finally {
       setIsLoading(false)
@@ -183,7 +183,7 @@ export function CheckoutForm({ bundleId, bundleName, bundlePrice, userEmail = ""
                 required 
                 disabled={isLoading}
               />
-              <p className="text-xs text-muted-foreground">We'll send an OTP to verify your email</p>
+              <p className="text-xs text-muted-foreground">We&apos;ll send an OTP to verify your email</p>
             </div>
           </CardContent>
         </Card>
@@ -225,7 +225,7 @@ export function CheckoutForm({ bundleId, bundleName, bundlePrice, userEmail = ""
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              We've sent a 6-digit OTP to <strong>{customerData.email}</strong>
+              We&apos;ve sent a 6-digit OTP to <strong>{customerData.email}</strong>
             </p>
             
             <form onSubmit={handleOtpSubmit} className="space-y-4">
@@ -328,7 +328,7 @@ export function CheckoutForm({ bundleId, bundleName, bundlePrice, userEmail = ""
               size="lg" 
               className="w-full"
             >
-              I've Made the Payment
+              I&apos;ve Made the Payment
             </Button>
           </CardContent>
         </Card>
@@ -403,7 +403,7 @@ export function CheckoutForm({ bundleId, bundleName, bundlePrice, userEmail = ""
               Thank you for your purchase! Your payment proof has been submitted and is being reviewed by our team.
             </p>
             <p className="text-sm text-muted-foreground">
-              You'll receive an email with your bundle download link once the payment is approved (usually within 2-4 hours).
+              You&apos;ll receive an email with your bundle download link once the payment is approved (usually within 2-4 hours).
             </p>
             <Button 
               onClick={() => router.push("/")}

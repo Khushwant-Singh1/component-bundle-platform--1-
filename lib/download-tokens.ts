@@ -140,7 +140,7 @@ export async function markTokenAsUsed(token: string): Promise<void> {
  * Clean up expired tokens
  */
 export async function cleanupExpiredTokens(userId?: string, bundleId?: string): Promise<number> {
-  const where: any = {
+  const where: Record<string, unknown> = {
     expiresAt: {
       lt: new Date()
     }

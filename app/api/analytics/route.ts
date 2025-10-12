@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Authentication and authorization
-    const user = await requireAdmin()
+    await requireAdmin()
 
     // Parse query parameters
     const url = new URL(request.url)
