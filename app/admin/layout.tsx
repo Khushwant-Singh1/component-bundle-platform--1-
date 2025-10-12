@@ -1,6 +1,8 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+
+export const dynamic = 'force-dynamic';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

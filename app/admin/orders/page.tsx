@@ -1,4 +1,6 @@
 import { Suspense } from "react"
+
+export const dynamic = 'force-dynamic';
 import { OrdersTable } from "@/components/admin/orders-table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
