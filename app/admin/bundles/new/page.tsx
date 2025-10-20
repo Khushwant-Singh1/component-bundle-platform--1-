@@ -113,6 +113,9 @@ export default function NewBundlePage() {
   const [benefits, setBenefits] = useState<string[]>([""]);
   const [setup, setSetup] = useState<{ title: string; description: string }[]>([{ title: "", description: "" }]);
   const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageInputMode, setImageInputMode] = useState<'upload' | 'cdn'>('upload');
+  const [cdnUrlInput, setCdnUrlInput] = useState('');
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -168,10 +171,10 @@ export default function NewBundlePage() {
       bundleFormSchema.parse(formDataToValidate);
 
       // Additional validations
-      if (images.length === 0) {
+      if (images.length === 0 && imageUrls.length === 0) {
         setErrors((prev) => ({
           ...prev,
-          images: "At least one image is required",
+          images: "At least one image is required (upload or CDN link)",
         }));
         return false;
       }
@@ -345,6 +348,26 @@ export default function NewBundlePage() {
       }
     }
   };
+
+  const addCdnUrl = () => {
+    if (cdnUrlInput.trim()) {
+      setImageUrls([...imageUrls, cdnUrlInput.trim()]);
+      setCdnUrlInput('');
+      // Clear images error
+      if (errors.images) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.images;
+          return newErrors;
+        });
+      }
+    }
+  };
+
+  const removeCdnUrl = (index: number) => {
+    setImageUrls(imageUrls.filter((_, i) => i !== index));
+  };
+
   const removeImage = (index: number) =>
     setImages(images.filter((_, i) => i !== index));
   const handleZipUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -379,7 +402,12 @@ export default function NewBundlePage() {
     let uploadedImageUrls: string[] = [];
 
     try {
-      uploadedImageUrls = await uploadMultipleToCloudinary(images);
+      // Upload files to Cloudinary
+      if (images.length > 0) {
+        uploadedImageUrls = await uploadMultipleToCloudinary(images);
+      }
+      // Add CDN URLs
+      uploadedImageUrls = [...uploadedImageUrls, ...imageUrls];
     } catch (error) {
       console.error("Image upload failed:", error);
       setGeneralError(
@@ -1035,69 +1063,179 @@ export default function NewBundlePage() {
             <TabsContent value="media" className="space-y-6 pt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Bundle Images *</CardTitle>
+                  <CardTitle>Bundle Images / Videos *</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <label
-                    htmlFor="image-upload"
-                    className={`cursor-pointer border-2 border-dashed rounded-lg p-8 text-center block hover:bg-muted/50 transition-colors ${
-                      errors.images
-                        ? "border-destructive"
-                        : "border-muted-foreground/25"
-                    }`}
-                  >
-                    <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-lg font-medium">
-                      Click to Upload Images
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      First image is the main preview. Drag and drop supported.
-                    </p>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                  </label>
+                  {/* Mode Selector */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <Label>Input Method:</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={imageInputMode === 'upload' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setImageInputMode('upload')}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Files
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={imageInputMode === 'cdn' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setImageInputMode('cdn')}
+                      >
+                        CDN Links
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Upload Mode */}
+                  {imageInputMode === 'upload' && (
+                    <>
+                      <label
+                        htmlFor="image-upload"
+                        className={`cursor-pointer border-2 border-dashed rounded-lg p-8 text-center block hover:bg-muted/50 transition-colors ${
+                          errors.images
+                            ? "border-destructive"
+                            : "border-muted-foreground/25"
+                        }`}
+                      >
+                        <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-lg font-medium">
+                          Click to Upload Images/Videos
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          First image is the main preview. Drag and drop supported.
+                        </p>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*,video/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          id="image-upload"
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  {/* CDN Mode */}
+                  {imageInputMode === 'cdn' && (
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          value={cdnUrlInput}
+                          onChange={(e) => setCdnUrlInput(e.target.value)}
+                          placeholder="https://cdn.example.com/image.jpg"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addCdnUrl();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addCdnUrl}
+                          disabled={!cdnUrlInput.trim()}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Add CDN URLs for images or videos. Press Enter or click Add.
+                      </p>
+                    </div>
+                  )}
+
                   {errors.images && (
                     <p className="text-sm text-destructive">{errors.images}</p>
                   )}
+
+                  {/* Display Uploaded Files */}
                   {images.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {images.map((image, index) => (
-                        <div
-                          key={index}
-                          className="relative group aspect-video"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={URL.createObjectURL(image)}
-                            alt={image.name}
-                            className="w-full h-full object-cover rounded-lg"
-                            onLoad={(e) =>
-                              URL.revokeObjectURL(e.currentTarget.src)
-                            }
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Uploaded Files:</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {images.map((image, index) => (
+                          <div
+                            key={index}
+                            className="relative group aspect-video"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={URL.createObjectURL(image)}
+                              alt={image.name}
+                              className="w-full h-full object-cover rounded-lg"
+                              onLoad={(e) =>
+                                URL.revokeObjectURL(e.currentTarget.src)
+                              }
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => removeImage(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            {index === 0 && imageUrls.length === 0 && (
+                              <Badge className="absolute bottom-2 left-2">
+                                Cover
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Display CDN URLs */}
+                  {imageUrls.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">CDN Links:</h4>
+                      <div className="space-y-2">
+                        {imageUrls.map((url, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 p-3 bg-muted rounded-lg"
+                          >
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <div className="aspect-video bg-background rounded overflow-hidden">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={url}
+                                  alt={`CDN ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.parentElement!.innerHTML = '<div class="flex items-center justify-center h-full text-xs text-muted-foreground">Invalid URL</div>';
+                                  }}
+                                />
+                              </div>
+                              <div className="flex items-center">
+                                <p className="text-sm truncate">{url}</p>
+                              </div>
+                            </div>
+                            {index === 0 && images.length === 0 && (
+                              <Badge>Cover</Badge>
+                            )}
                             <Button
-                              variant="destructive"
+                              type="button"
+                              variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
-                              onClick={() => removeImage(index)}
+                              onClick={() => removeCdnUrl(index)}
                             >
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
-                          {index === 0 && (
-                            <Badge className="absolute bottom-2 left-2">
-                              Cover
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -1262,9 +1400,16 @@ export default function NewBundlePage() {
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />
+                  ) : imageUrls.length > 0 ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={imageUrls[0]}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <span className="text-sm text-muted-foreground">
-                      Upload an Image
+                      Upload an Image or Add CDN Link
                     </span>
                   )}
                 </div>
